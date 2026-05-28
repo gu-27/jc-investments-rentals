@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JC Investments — Rental Inspections</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  :root {
+    --navy:    #0F2A3D;
+    --navy-lt: #1E3A5F;
+    --teal:    #0E7490;
+    --green:   #047857;
+    --blue:    #1D4ED8;
+    --amber:   #B45309;
+    --red:     #B91C1C;
+    --gray:    #64748B;
+    --bg:      #F1F5F9;
+    --surface: #FFFFFF;
+    --border:  #E2E8F0;
+    --text:    #0F172A;
+    --muted:   #64748B;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--navy);
+    color: white;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .brand { display: flex; flex-direction: column; line-height: 1.2; }
+  .brand-name { font-size: 1.05rem; font-weight: 800; letter-spacing: -.01em; }
+  .brand-sub  { font-size: .7rem; color: rgba(255,255,255,.55); font-weight: 400; letter-spacing: .06em; text-transform: uppercase; margin-top: 2px; }
+
+  #auth-pill {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .35rem .85rem;
+    border-radius: 20px;
+    font-size: .75rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+    transition: opacity .2s;
+    white-space: nowrap;
+  }
+  #auth-pill.signed-out { background: rgba(255,255,255,.12); color: rgba(255,255,255,.8); }
+  #auth-pill.signed-in  { background: rgba(4,120,87,.3); color: #6EE7B7; }
+  #auth-pill:hover { opacity: .85; }
+
+  /* ── Hero ── */
+  .hero {
+    background: var(--navy-lt);
+    color: white;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+  }
+  .hero h1 { font-size: clamp(1.5rem, 4vw, 2.2rem); font-weight: 800; letter-spacing: -.03em; margin-bottom: .6rem; }
+  .hero p  { font-size: .9rem; color: rgba(255,255,255,.6); max-width: 480px; margin: 0 auto; line-height: 1.6; }
+
+  /* ── Grid ── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+    padding: 1.75rem 1.5rem;
+    max-width: 900px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: .85rem;
+    text-decoration: none;
+    color: var(--text);
+    transition: transform .18s, box-shadow .18s;
+    position: relative;
+    overflow: hidden;
+  }
+  .card:not(.card-soon):hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(0,0,0,.12);
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+  }
+  .card-checkin::before  { background: var(--green); }
+  .card-checkout::before { background: var(--blue); }
+  .card-soon { opacity: .55; cursor: not-allowed; }
+  .card-soon::before { background: var(--gray); }
+
+  .card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+  }
+  .card-checkin  .card-icon { background: #D1FAE5; }
+  .card-checkout .card-icon { background: #DBEAFE; }
+  .card-soon     .card-icon { background: #F1F5F9; }
+
+  .card-label {
+    font-size: .62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+  }
+  .card-checkin  .card-label { color: var(--green); }
+  .card-checkout .card-label { color: var(--blue); }
+  .card-soon     .card-label { color: var(--gray); }
+
+  .card-title { font-size: 1.25rem; font-weight: 800; letter-spacing: -.02em; color: var(--text); }
+
+  .card-desc { font-size: .83rem; color: var(--muted); line-height: 1.55; }
+
+  .card-arrow {
+    margin-top: auto;
+    font-size: .82rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+  }
+  .card-checkin  .card-arrow { color: var(--green); }
+  .card-checkout .card-arrow { color: var(--blue); }
+
+  .coming-soon-badge {
+    margin-top: auto;
+    display: inline-block;
+    padding: .25rem .7rem;
+    background: #F1F5F9;
+    border-radius: 20px;
+    font-size: .7rem;
+    font-weight: 700;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    align-self: flex-start;
+  }
+
+  /* ── Settings modal ── */
+  .modal-backdrop {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.5);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 1.75rem;
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+  }
+  .modal-title { font-size: 1.1rem; font-weight: 800; color: var(--text); }
+  .modal-desc  { font-size: .82rem; color: var(--muted); line-height: 1.55; }
+  .modal label { font-size: .72rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; display: block; margin-bottom: .35rem; }
+  .modal input[type="text"] {
+    width: 100%;
+    padding: .65rem .9rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: .9rem;
+    font-family: monospace;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .modal input:focus { border-color: var(--teal); }
+  .modal-help { font-size: .75rem; color: var(--muted); line-height: 1.55; }
+  .modal-help a { color: var(--teal); }
+  .modal-actions { display: flex; gap: .65rem; justify-content: flex-end; }
+
+  button {
+    display: inline-flex; align-items: center; gap: .4rem;
+    padding: .6rem 1.25rem;
+    border: none; border-radius: 8px;
+    font-family: inherit; font-size: .85rem; font-weight: 600;
+    cursor: pointer; transition: filter .15s;
+  }
+  button:hover { filter: brightness(1.08); }
+  .btn-primary  { background: var(--navy);  color: white; }
+  .btn-cancel   { background: var(--bg);    color: var(--muted); }
+
+  /* ── Footer ── */
+  footer {
+    margin-top: auto;
+    padding: 1.25rem 1.5rem;
+    text-align: center;
+    font-size: .72rem;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="brand-name">JC Investments</span>
+    <span class="brand-sub">Rental Inspection System</span>
+  </div>
+  <button id="auth-pill" class="signed-out" onclick="toggleSettings()">⚙ Google Drive Setup</button>
+</header>
+
+<div class="hero">
+  <h1>Property Inspections</h1>
+  <p>Document property condition at check-in and check-out. Photos and reports save directly to Google Drive.</p>
+</div>
+
+<div class="cards-grid">
+
+  <a href="inspection.html?mode=checkin" class="card card-checkin">
+    <div class="card-icon">🏠</div>
+    <div class="card-label">Arrival</div>
+    <div class="card-title">Check-In</div>
+    <div class="card-desc">Document property condition when guests arrive. Walk each room, rate condition, add photos and notes.</div>
+    <div class="card-arrow">Start Check-In →</div>
+  </a>
+
+  <a href="inspection.html?mode=checkout" class="card card-checkout">
+    <div class="card-icon">🔑</div>
+    <div class="card-label">Departure</div>
+    <div class="card-title">Check-Out</div>
+    <div class="card-desc">Document property condition when guests depart. Flag any damage or issues for follow-up.</div>
+    <div class="card-arrow">Start Check-Out →</div>
+  </a>
+
+  <div class="card card-soon">
+    <div class="card-icon">☑️</div>
+    <div class="card-label">Preparation</div>
+    <div class="card-title">Setup Checklist</div>
+    <div class="card-desc">Pre-arrival preparation checklist — supplies, linens, walkthrough items.</div>
+    <span class="coming-soon-badge">Coming Soon</span>
+  </div>
+
+  <div class="card card-soon">
+    <div class="card-icon">🔍</div>
+    <div class="card-label">Mid-Stay</div>
+    <div class="card-title">Check-Up</div>
+    <div class="card-desc">Scheduled mid-stay property condition check and maintenance review.</div>
+    <span class="coming-soon-badge">Coming Soon</span>
+  </div>
+
+</div>
+
+<!-- Settings / Drive Setup Modal -->
+<div class="modal-backdrop" id="settings-modal">
+  <div class="modal">
+    <div class="modal-title">⚙ Google Drive Setup</div>
+    <div class="modal-desc">Connect a Google account so inspections automatically save photos and reports to your Drive. You only need to do this once per device.</div>
+    <div>
+      <label for="client-id-input">Google OAuth Client ID</label>
+      <input type="text" id="client-id-input" placeholder="123456789-abc…apps.googleusercontent.com">
+    </div>
+    <div class="modal-help">
+      To get a Client ID: go to <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a> → Create Project → Enable Drive API → OAuth 2.0 Credentials → Web Application. Add <strong id="origin-display"></strong> as an authorized JavaScript origin.
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeSettings()">Cancel</button>
+      <button class="btn-primary" onclick="saveClientId()">Save &amp; Connect</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  JC Investments &nbsp;·&nbsp; Rental Inspection System &nbsp;·&nbsp; 100% local &amp; private
+</footer>
+
+<script>
+  // Show current origin for setup instructions
+  document.getElementById('origin-display').textContent = window.location.origin;
+
+  // Pre-fill saved client ID
+  const saved = localStorage.getItem('gClientId') || '';
+  if (saved) {
+    document.getElementById('client-id-input').value = saved;
+    document.getElementById('auth-pill').textContent = '✓ Drive Connected';
+    document.getElementById('auth-pill').classList.replace('signed-out', 'signed-in');
+  }
+
+  function toggleSettings() { document.getElementById('settings-modal').classList.add('open'); }
+  function closeSettings()  { document.getElementById('settings-modal').classList.remove('open'); }
+
+  function saveClientId() {
+    const val = document.getElementById('client-id-input').value.trim();
+    if (!val) { alert('Please enter your Google Client ID.'); return; }
+    localStorage.setItem('gClientId', val);
+    document.getElementById('auth-pill').textContent = '✓ Drive Connected';
+    document.getElementById('auth-pill').classList.replace('signed-out', 'signed-in');
+    closeSettings();
+  }
+
+  // Close modal on backdrop click
+  document.getElementById('settings-modal').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closeSettings();
+  });
+</script>
+</body>
+</html>

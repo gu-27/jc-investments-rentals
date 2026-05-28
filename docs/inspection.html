@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Property Inspection — JC Investments</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:      #0F2A3D;
+    --navy-lt:   #1E3A5F;
+    --teal:      #0E7490;
+    --green:     #047857;
+    --green-lt:  #D1FAE5;
+    --blue:      #1D4ED8;
+    --blue-lt:   #DBEAFE;
+    --amber:     #B45309;
+    --amber-lt:  #FEF3C7;
+    --red:       #B91C1C;
+    --red-lt:    #FEE2E2;
+    --gray:      #64748B;
+    --bg:        #F1F5F9;
+    --surface:   #FFFFFF;
+    --border:    #E2E8F0;
+    --text:      #0F172A;
+    --muted:     #64748B;
+    --mode-color: var(--green);
+    --mode-lt:    var(--green-lt);
+  }
+  body.mode-checkout {
+    --mode-color: var(--blue);
+    --mode-lt:    var(--blue-lt);
+  }
+
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Screens ── */
+  .screen {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+  .screen.active { display: flex; }
+
+  /* ── Sticky top bar ── */
+  .top-bar {
+    background: var(--navy);
+    color: white;
+    padding: .75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .back-btn {
+    background: rgba(255,255,255,.1);
+    border: none;
+    color: white;
+    padding: .45rem .85rem;
+    border-radius: 7px;
+    font-size: .8rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    flex-shrink: 0;
+    transition: background .15s;
+  }
+  .back-btn:hover { background: rgba(255,255,255,.2); }
+  .top-bar-title { font-weight: 700; font-size: .9rem; flex: 1; }
+  .mode-pill {
+    padding: .25rem .7rem;
+    border-radius: 20px;
+    font-size: .68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    flex-shrink: 0;
+    background: var(--mode-color);
+    color: white;
+  }
+
+  /* ── Scrollable body ── */
+  .scroll-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.25rem 1rem 6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+  }
+
+  /* ── Sticky footer ── */
+  .sticky-foot {
+    position: sticky;
+    bottom: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: .85rem 1rem;
+    display: flex;
+    gap: .65rem;
+    flex-shrink: 0;
+  }
+
+  /* ── Buttons ── */
+  button {
+    display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
+    border: none; border-radius: 9px;
+    font-family: inherit; font-weight: 600; cursor: pointer;
+    transition: filter .15s, transform .1s;
+  }
+  button:active { transform: scale(.97); }
+  button:hover  { filter: brightness(1.08); }
+  button:disabled { opacity: .4; cursor: not-allowed; filter: none; }
+
+  .btn-primary  { background: var(--navy);  color: white; padding: .85rem 1.5rem; font-size: .9rem; width: 100%; }
+  .btn-mode     { background: var(--mode-color); color: white; padding: .85rem 1.5rem; font-size: .9rem; width: 100%; }
+  .btn-green    { background: var(--green); color: white; padding: .85rem 1.5rem; font-size: .9rem; flex: 1; }
+  .btn-gray     { background: var(--gray);  color: white; padding: .85rem 1.5rem; font-size: .9rem; flex: 1; }
+  .btn-sm       { padding: .4rem .85rem; font-size: .78rem; }
+
+  /* ── Cards / blocks ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .block { padding: 1.1rem 1rem; }
+  .block + .block { border-top: 1px solid var(--border); }
+  .block-label {
+    font-size: .68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+    margin-bottom: .65rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* ── Form elements ── */
+  label {
+    display: block;
+    font-size: .72rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    margin-bottom: .4rem;
+  }
+  input[type="text"], input[type="date"], textarea {
+    width: 100%;
+    padding: .7rem .9rem;
+    border: 1.5px solid var(--border);
+    border-radius: 9px;
+    font-size: .95rem;
+    font-family: inherit;
+    outline: none;
+    background: white;
+    transition: border-color .2s;
+    color: var(--text);
+  }
+  input:focus, textarea:focus { border-color: var(--teal); }
+  textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+
+  /* ── ════ SETUP SCREEN ════ ── */
+  .setup-hero {
+    background: var(--navy-lt);
+    color: white;
+    padding: 1.75rem 1rem;
+    text-align: center;
+  }
+  .setup-mode-badge {
+    display: inline-block;
+    padding: .35rem 1rem;
+    background: var(--mode-color);
+    color: white;
+    border-radius: 20px;
+    font-size: .72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    margin-bottom: .75rem;
+  }
+  .setup-hero h1 { font-size: 1.6rem; font-weight: 800; letter-spacing: -.03em; }
+
+  .form-group { display: flex; flex-direction: column; gap: .4rem; }
+
+  .property-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: .6rem;
+  }
+  .prop-btn {
+    padding: .9rem .5rem;
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-size: .95rem;
+    font-weight: 800;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all .15s;
+    font-family: inherit;
+  }
+  .prop-btn.active {
+    background: var(--mode-lt);
+    border-color: var(--mode-color);
+    color: var(--mode-color);
+  }
+  .prop-btn.coming-soon {
+    opacity: .45;
+    cursor: not-allowed;
+    font-size: .75rem;
+    font-weight: 600;
+  }
+
+  /* ── ════ ROOMS SCREEN ════ ── */
+  .inspection-strip {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: .65rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    font-size: .78rem;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+  .inspection-strip strong { color: var(--text); }
+
+  .progress-wrap {
+    padding: .75rem 1rem .5rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .progress-label {
+    font-size: .7rem;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: .45rem;
+    display: flex;
+    justify-content: space-between;
+  }
+  .progress-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--mode-color);
+    border-radius: 3px;
+    transition: width .4s ease;
+  }
+
+  .rooms-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem 1rem 6rem;
+    display: flex;
+    flex-direction: column;
+    gap: .85rem;
+  }
+
+  .group-header {
+    font-size: .65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--muted);
+    padding: .25rem 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: -.1rem;
+  }
+
+  .room-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: .9rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: .85rem;
+    cursor: pointer;
+    transition: border-color .15s, box-shadow .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .room-card:hover  { border-color: var(--teal); box-shadow: 0 4px 16px rgba(0,0,0,.07); }
+  .room-card.done   { border-color: #86EFAC; background: #F0FDF4; }
+  .room-card.flagged-room { border-color: #FCA5A5; }
+
+  .room-status-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--border);
+  }
+  .room-card.done   .room-status-dot { background: var(--green); }
+  .room-card.flagged-room .room-status-dot { background: var(--red); }
+  .room-card.in-progress  .room-status-dot { background: var(--amber); }
+
+  .room-card-body { flex: 1; min-width: 0; }
+  .room-card-name { font-weight: 700; font-size: .9rem; color: var(--text); }
+  .room-card-meta { font-size: .72rem; color: var(--muted); margin-top: .15rem; display: flex; gap: .5rem; flex-wrap: wrap; }
+
+  .cond-badge {
+    padding: .15rem .5rem;
+    border-radius: 4px;
+    font-size: .65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .cond-good      { background: var(--green-lt); color: var(--green); }
+  .cond-fair      { background: var(--amber-lt); color: var(--amber); }
+  .cond-attention { background: var(--red-lt);   color: var(--red); }
+
+  .photo-count-badge {
+    background: var(--bg);
+    color: var(--muted);
+    padding: .15rem .5rem;
+    border-radius: 4px;
+    font-size: .65rem;
+    font-weight: 700;
+  }
+  .flag-count-badge {
+    background: var(--red-lt);
+    color: var(--red);
+    padding: .15rem .5rem;
+    border-radius: 4px;
+    font-size: .65rem;
+    font-weight: 700;
+  }
+
+  .room-card-arrow { color: var(--muted); font-size: .9rem; flex-shrink: 0; }
+
+  /* ── ════ ROOM DETAIL SCREEN ════ ── */
+  .condition-picker {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: .6rem;
+  }
+  .cond-btn {
+    padding: .75rem .5rem;
+    border-radius: 10px;
+    font-size: .78rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all .15s;
+    text-align: center;
+  }
+  .cond-btn-good      { background: var(--green-lt); color: var(--green);  border-color: var(--green-lt); }
+  .cond-btn-fair      { background: var(--amber-lt); color: var(--amber);  border-color: var(--amber-lt); }
+  .cond-btn-attention { background: var(--red-lt);   color: var(--red);    border-color: var(--red-lt); }
+  .cond-btn-good.sel      { border-color: var(--green); box-shadow: 0 0 0 2px rgba(4,120,87,.25); }
+  .cond-btn-fair.sel      { border-color: var(--amber); box-shadow: 0 0 0 2px rgba(180,83,9,.25); }
+  .cond-btn-attention.sel { border-color: var(--red);   box-shadow: 0 0 0 2px rgba(185,28,28,.25); }
+
+  .camera-btn {
+    background: var(--navy);
+    color: white;
+    padding: .9rem 1.25rem;
+    border-radius: 10px;
+    font-size: .9rem;
+    font-weight: 700;
+    width: 100%;
+    cursor: pointer;
+    font-family: inherit;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    margin-bottom: .9rem;
+  }
+  .camera-btn:active { transform: scale(.98); }
+
+  /* ── Photo grid ── */
+  .photo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .75rem;
+  }
+  .photo-card {
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .photo-card.is-flagged { border-color: var(--red); background: var(--red-lt); }
+
+  .photo-thumb-wrap { position: relative; aspect-ratio: 4/3; overflow: hidden; }
+  .photo-thumb { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .photo-flag-btn {
+    position: absolute;
+    top: .4rem; right: .4rem;
+    background: rgba(0,0,0,.45);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: .3rem .5rem;
+    font-size: .75rem;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 700;
+    transition: background .15s;
+  }
+  .photo-flag-btn.flagged { background: var(--red); }
+  .photo-delete-btn {
+    position: absolute;
+    top: .4rem; left: .4rem;
+    background: rgba(0,0,0,.45);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: .3rem .5rem;
+    font-size: .75rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background .15s;
+  }
+  .photo-delete-btn:hover { background: var(--red); }
+
+  .photo-note-area {
+    padding: .5rem .6rem;
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+  }
+  .photo-note-area textarea {
+    min-height: 54px;
+    font-size: .78rem;
+    padding: .45rem .6rem;
+    border-color: var(--border);
+    border-radius: 6px;
+  }
+  .is-flagged .photo-note-area textarea { border-color: #FCA5A5; }
+  .flag-label {
+    font-size: .62rem;
+    font-weight: 700;
+    color: var(--red);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+
+  /* ── ════ SUMMARY SCREEN ════ ── */
+  .summary-hero {
+    background: var(--navy-lt);
+    color: white;
+    padding: 1.75rem 1rem;
+    text-align: center;
+  }
+  .summary-hero h2 { font-size: 1.4rem; font-weight: 800; margin-bottom: .4rem; }
+  .summary-hero p  { font-size: .82rem; color: rgba(255,255,255,.6); }
+
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: .65rem;
+  }
+  .stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: .85rem .75rem;
+    text-align: center;
+  }
+  .stat-num  { font-size: 1.5rem; font-weight: 800; color: var(--text); line-height: 1; }
+  .stat-lbl  { font-size: .65rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-top: .3rem; }
+
+  .flagged-list { display: flex; flex-direction: column; gap: .5rem; }
+  .flagged-item {
+    background: var(--red-lt);
+    border: 1px solid #FCA5A5;
+    border-radius: 8px;
+    padding: .65rem .85rem;
+    font-size: .82rem;
+    color: var(--red);
+    display: flex;
+    gap: .65rem;
+    align-items: flex-start;
+  }
+  .flagged-item-room { font-weight: 700; flex-shrink: 0; }
+  .flagged-item-note { color: #7F1D1D; }
+
+  .room-summary-row {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    padding: .65rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: .85rem;
+  }
+  .room-summary-row:last-child { border-bottom: none; }
+  .rsrow-name  { flex: 1; font-weight: 600; color: var(--text); }
+  .rsrow-meta  { display: flex; gap: .4rem; align-items: center; }
+
+  /* Drive save section */
+  .save-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .save-head {
+    padding: .85rem 1rem;
+    background: #F8FAFC;
+    border-bottom: 1px solid var(--border);
+    font-weight: 700;
+    font-size: .88rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+  .save-body { padding: 1rem; display: flex; flex-direction: column; gap: .85rem; }
+
+  .btn-google {
+    background: white;
+    border: 1.5px solid var(--border);
+    color: var(--text);
+    padding: .8rem 1.25rem;
+    border-radius: 9px;
+    font-size: .88rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .6rem;
+    transition: box-shadow .15s;
+  }
+  .btn-google:hover { box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+
+  .btn-save-drive {
+    background: #1A73E8;
+    color: white;
+    padding: .9rem 1.25rem;
+    border-radius: 9px;
+    font-size: .9rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+  }
+  .btn-save-drive:hover { filter: brightness(1.05); }
+  .btn-save-drive:disabled { opacity: .5; cursor: not-allowed; }
+
+  .btn-download {
+    background: var(--bg);
+    color: var(--navy);
+    padding: .85rem 1.25rem;
+    border-radius: 9px;
+    font-size: .88rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    border: 1.5px solid var(--border);
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+  }
+
+  .auth-hint { font-size: .78rem; color: var(--muted); line-height: 1.5; }
+
+  .signed-in-row {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--green);
+  }
+
+  .save-prog-wrap { display: flex; flex-direction: column; gap: .5rem; }
+  .save-prog-bar  { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .save-prog-fill { height: 100%; background: #1A73E8; border-radius: 3px; transition: width .3s; }
+  .save-prog-text { font-size: .75rem; color: var(--muted); }
+
+  .drive-success {
+    background: var(--green-lt);
+    border: 1px solid #86EFAC;
+    border-radius: 9px;
+    padding: .85rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+  }
+  .drive-success-title { font-weight: 700; color: var(--green); font-size: .88rem; }
+  .drive-link { color: #1A73E8; font-size: .8rem; font-weight: 600; text-decoration: none; }
+  .drive-link:hover { text-decoration: underline; }
+
+  .no-client-id-warn {
+    background: var(--amber-lt);
+    border: 1px solid #FCD34D;
+    border-radius: 8px;
+    padding: .75rem .9rem;
+    font-size: .78rem;
+    color: var(--amber);
+    font-weight: 600;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 480px) {
+    .photo-grid { grid-template-columns: 1fr 1fr; }
+    .condition-picker { grid-template-columns: 1fr 1fr 1fr; }
+  }
+  @media (min-width: 640px) {
+    .photo-grid { grid-template-columns: 1fr 1fr 1fr; }
+    .scroll-body { max-width: 680px; margin: 0 auto; width: 100%; }
+    .rooms-list  { max-width: 680px; margin: 0 auto; width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     SCREEN 1 — SETUP
+══════════════════════════════════════════════════════════ -->
+<div id="s-setup" class="screen active">
+  <div class="setup-hero">
+    <div class="setup-mode-badge" id="setup-mode-badge">Check-In</div>
+    <h1 id="setup-title">New Inspection</h1>
+  </div>
+  <div class="scroll-body" style="padding-top:1.5rem;">
+
+    <div class="card">
+      <div class="block">
+        <div class="block-label">Property</div>
+        <div class="property-grid">
+          <button class="prop-btn" onclick="selectProperty('1919')">1919</button>
+          <button class="prop-btn" onclick="selectProperty('1933')">1933</button>
+          <button class="prop-btn" onclick="selectProperty('1945')">1945</button>
+          <button class="prop-btn coming-soon" disabled title="Coming soon">402</button>
+          <button class="prop-btn coming-soon" disabled title="Coming soon">1608</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="block">
+        <div class="form-group">
+          <label for="guest-input">Guest / Tenant Name</label>
+          <input type="text" id="guest-input" placeholder="e.g. Smith Family">
+        </div>
+      </div>
+      <div class="block">
+        <div class="form-group">
+          <label for="date-input">Inspection Date</label>
+          <input type="date" id="date-input">
+        </div>
+      </div>
+      <div class="block">
+        <div class="form-group">
+          <label for="general-notes">General Notes (optional)</label>
+          <textarea id="general-notes" placeholder="Any overall notes before starting…"></textarea>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <div class="sticky-foot">
+    <button class="btn-mode" onclick="beginInspection()">Begin Inspection →</button>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     SCREEN 2 — ROOM LIST
+══════════════════════════════════════════════════════════ -->
+<div id="s-rooms" class="screen">
+  <div class="top-bar">
+    <button class="back-btn" onclick="show('s-setup')">← Back</button>
+    <div class="top-bar-title" id="rooms-title">Inspection</div>
+    <div class="mode-pill" id="rooms-mode-pill">Check-In</div>
+  </div>
+  <div class="inspection-strip" id="inspection-strip">
+    <span id="strip-info"></span>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span id="progress-label-text">0 of 19 rooms</span>
+      <span id="progress-pct">0%</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  </div>
+  <div class="rooms-list" id="rooms-list"></div>
+  <div class="sticky-foot">
+    <button class="btn-gray" onclick="showSummary()">Finish &amp; Review →</button>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     SCREEN 3 — ROOM DETAIL
+══════════════════════════════════════════════════════════ -->
+<div id="s-room" class="screen">
+  <div class="top-bar">
+    <button class="back-btn" onclick="backToRooms()">← Rooms</button>
+    <div class="top-bar-title" id="room-top-title"></div>
+    <div class="mode-pill" id="room-mode-pill">Check-In</div>
+  </div>
+  <div class="scroll-body">
+
+    <!-- Condition -->
+    <div class="card">
+      <div class="block">
+        <div class="block-label">Condition</div>
+        <div class="condition-picker">
+          <button class="cond-btn cond-btn-good"      id="cond-good"      onclick="setCondition('good')">✓ Good</button>
+          <button class="cond-btn cond-btn-fair"      id="cond-fair"      onclick="setCondition('fair')">~ Fair</button>
+          <button class="cond-btn cond-btn-attention" id="cond-attention" onclick="setCondition('attention')">✗ Needs Attention</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Room Note -->
+    <div class="card">
+      <div class="block">
+        <div class="block-label">Room Note</div>
+        <textarea id="room-note-input" placeholder="General notes about this room's condition…" oninput="saveRoomNote(this.value)"></textarea>
+      </div>
+    </div>
+
+    <!-- Photos -->
+    <div class="card">
+      <div class="block">
+        <div class="block-label">
+          Photos
+          <span id="photo-count-label" style="font-weight:400; text-transform:none; letter-spacing:0; font-size:.72rem;"></span>
+        </div>
+        <button class="camera-btn" onclick="triggerCamera()">📷 Add Photo</button>
+        <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none" onchange="handlePhotos(event)">
+        <div id="photo-grid" class="photo-grid"></div>
+      </div>
+    </div>
+
+  </div>
+  <div class="sticky-foot">
+    <button class="btn-mode" style="flex:1" onclick="doneWithRoom()">✓ Done with Room</button>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     SCREEN 4 — SUMMARY
+══════════════════════════════════════════════════════════ -->
+<div id="s-summary" class="screen">
+  <div class="top-bar">
+    <button class="back-btn" onclick="show('s-rooms')">← Rooms</button>
+    <div class="top-bar-title">Inspection Summary</div>
+    <div class="mode-pill" id="summary-mode-pill">Check-In</div>
+  </div>
+  <div class="scroll-body">
+
+    <div class="summary-hero">
+      <h2 id="summary-title">Inspection Complete</h2>
+      <p  id="summary-meta"></p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stat-row">
+      <div class="stat-box">
+        <div class="stat-num" id="stat-rooms">0</div>
+        <div class="stat-lbl">Rooms</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="stat-photos">0</div>
+        <div class="stat-lbl">Photos</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="stat-flags" style="color:var(--red)">0</div>
+        <div class="stat-lbl">Flagged</div>
+      </div>
+    </div>
+
+    <!-- Flagged items -->
+    <div id="flagged-section"></div>
+
+    <!-- Room table -->
+    <div class="card">
+      <div class="block">
+        <div class="block-label">Room Summary</div>
+        <div id="room-summary-rows"></div>
+      </div>
+    </div>
+
+    <!-- Save to Drive -->
+    <div class="save-card">
+      <div class="save-head">☁ Save to Google Drive</div>
+      <div class="save-body">
+
+        <div id="no-client-warn" style="display:none" class="no-client-id-warn">
+          ⚠ Google Drive not configured. <a href="index.html" style="color:var(--amber)">Go to Settings on the home page</a> to add your Client ID.
+        </div>
+
+        <div id="auth-area">
+          <div id="auth-not-signed-in">
+            <button class="btn-google" onclick="signIn()">
+              <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+              Sign in with Google
+            </button>
+            <div class="auth-hint">Sign in to save photos and the report directly to your Google Drive.</div>
+          </div>
+          <div id="auth-signed-in" style="display:none">
+            <div class="signed-in-row">✓ Signed in — ready to save</div>
+            <button class="btn-save-drive" id="save-drive-btn" onclick="saveToDrive()">
+              ☁ Save to Google Drive
+            </button>
+          </div>
+        </div>
+
+        <div id="save-progress-wrap" style="display:none" class="save-prog-wrap">
+          <div class="save-prog-bar"><div class="save-prog-fill" id="save-prog-fill" style="width:0%"></div></div>
+          <div class="save-prog-text" id="save-prog-text">Uploading…</div>
+        </div>
+
+        <div id="save-success-wrap" style="display:none" class="drive-success">
+          <div class="drive-success-title">✓ Saved to Google Drive</div>
+          <a id="drive-folder-link" href="#" target="_blank" class="drive-link">Open inspection folder in Drive →</a>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Download report -->
+    <button class="btn-download" onclick="downloadReport()">⬇ Download HTML Report</button>
+
+    <!-- New inspection -->
+    <button class="btn-primary" onclick="newInspection()" style="margin-top:.25rem;">Start New Inspection</button>
+
+  </div>
+</div>
+
+<!-- Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async onload="initAuth()"></script>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  CONSTANTS
+// ════════════════════════════════════════════════════════
+const ROOM_DEFS = [
+  { key:'outside-patios',         label:'Outside Patios',          group:'Exterior' },
+  { key:'kitchen',                label:'Kitchen',                 group:'Main Floor' },
+  { key:'living-room',            label:'Living Room',             group:'Main Floor' },
+  { key:'main-hall',              label:'Main Hall',               group:'Main Floor' },
+  { key:'main-bathroom',          label:'Main Bathroom',           group:'Main Floor' },
+  { key:'main-south-bedroom',     label:'Main South Bedroom',      group:'Main Floor' },
+  { key:'main-north-bedroom',     label:'Main North Bedroom',      group:'Main Floor' },
+  { key:'laundry-room',           label:'Laundry Room',            group:'Main Floor' },
+  { key:'basement-storage',       label:'Basement / Storage',      group:'Lower' },
+  { key:'stairs',                 label:'Stairs',                  group:'Circulation' },
+  { key:'upstairs-hallway',       label:'Upstairs Hallway',        group:'Upper Floor' },
+  { key:'upstairs-sw',            label:'Upstairs SW',             group:'Upper Floor' },
+  { key:'upstairs-s',             label:'Upstairs S',              group:'Upper Floor' },
+  { key:'upstairs-se',            label:'Upstairs SE',             group:'Upper Floor' },
+  { key:'upstairs-ne',            label:'Upstairs NE',             group:'Upper Floor' },
+  { key:'upstairs-n',             label:'Upstairs N',              group:'Upper Floor' },
+  { key:'upstairs-nw',            label:'Upstairs NW',             group:'Upper Floor' },
+  { key:'upstairs-e-bathroom',    label:'Upstairs E Bathroom',     group:'Upper Floor' },
+  { key:'upstairs-other-bathroom',label:'Upstairs Other Bathroom', group:'Upper Floor' },
+];
+
+// ════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════
+const S = {
+  mode:     'checkin',
+  property: '',
+  guest:    '',
+  date:     new Date().toISOString().split('T')[0],
+  notes:    '',
+  rooms:    {},   // key → { key, label, note, condition, photos:[], completed }
+  curRoom:  '',
+  token:    null,
+  tokenExp: 0,
+};
+
+let tokenClient = null;
+
+// ════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════
+(function init() {
+  // Read mode from URL
+  const params = new URLSearchParams(window.location.search);
+  S.mode = params.get('mode') === 'checkout' ? 'checkout' : 'checkin';
+
+  // Apply mode classes and labels
+  document.body.classList.toggle('mode-checkout', S.mode === 'checkout');
+  const modeLabel = S.mode === 'checkin' ? 'Check-In' : 'Check-Out';
+  document.getElementById('setup-mode-badge').textContent  = modeLabel;
+  document.getElementById('setup-title').textContent       = `New ${modeLabel}`;
+  document.getElementById('rooms-mode-pill').textContent   = modeLabel;
+  document.getElementById('room-mode-pill').textContent    = modeLabel;
+  document.getElementById('summary-mode-pill').textContent = modeLabel;
+
+  // Default date
+  document.getElementById('date-input').value = S.date;
+
+  // Init rooms state
+  ROOM_DEFS.forEach(r => {
+    S.rooms[r.key] = { key: r.key, label: r.label, note: '', condition: '', photos: [], completed: false };
+  });
+
+  // Warn if no Drive configured
+  if (!localStorage.getItem('gClientId')) {
+    document.getElementById('no-client-warn').style.display = 'block';
+  }
+})();
+
+// ════════════════════════════════════════════════════════
+//  GOOGLE AUTH
+// ════════════════════════════════════════════════════════
+function initAuth() {
+  const clientId = localStorage.getItem('gClientId');
+  if (!clientId || !window.google) return;
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: clientId,
+    scope: 'https://www.googleapis.com/auth/drive.file',
+    callback: (resp) => {
+      if (resp.error) { alert('Sign-in failed: ' + resp.error); return; }
+      S.token   = resp.access_token;
+      S.tokenExp = Date.now() + ((resp.expires_in - 60) * 1000);
+      document.getElementById('auth-not-signed-in').style.display = 'none';
+      document.getElementById('auth-signed-in').style.display     = 'flex';
+      document.getElementById('auth-signed-in').style.flexDirection = 'column';
+      document.getElementById('auth-signed-in').style.gap = '.75rem';
+    }
+  });
+}
+
+function signIn() {
+  if (!localStorage.getItem('gClientId')) {
+    alert('Google Drive not configured. Add your Client ID on the home page first.');
+    return;
+  }
+  if (!tokenClient) { initAuth(); }
+  if (!tokenClient) { alert('Could not initialize Google Sign-In. Check your Client ID.'); return; }
+  tokenClient.requestAccessToken({ prompt: '' });
+}
+
+// ════════════════════════════════════════════════════════
+//  SCREEN NAVIGATION
+// ════════════════════════════════════════════════════════
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ════════════════════════════════════════════════════════
+//  SETUP SCREEN
+// ════════════════════════════════════════════════════════
+function selectProperty(prop) {
+  S.property = prop;
+  document.querySelectorAll('.prop-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+function beginInspection() {
+  if (!S.property) { alert('Please select a property.'); return; }
+  S.guest = document.getElementById('guest-input').value.trim();
+  S.date  = document.getElementById('date-input').value;
+  S.notes = document.getElementById('general-notes').value.trim();
+
+  // Update rooms header strip
+  const modeLabel = S.mode === 'checkin' ? 'Check-In' : 'Check-Out';
+  document.getElementById('rooms-title').textContent = `${modeLabel} — ${S.property}`;
+  document.getElementById('strip-info').innerHTML =
+    `<strong>${S.property}</strong> &nbsp;·&nbsp; ${S.guest || 'No guest name'} &nbsp;·&nbsp; ${formatDate(S.date)}`;
+
+  renderRoomList();
+  show('s-rooms');
+}
+
+// ════════════════════════════════════════════════════════
+//  ROOM LIST SCREEN
+// ════════════════════════════════════════════════════════
+function renderRoomList() {
+  const container = document.getElementById('rooms-list');
+  container.innerHTML = '';
+
+  const groups = [];
+  const groupMap = {};
+  ROOM_DEFS.forEach(r => {
+    if (!groupMap[r.group]) { groupMap[r.group] = []; groups.push(r.group); }
+    groupMap[r.group].push(r);
+  });
+
+  groups.forEach(g => {
+    const header = document.createElement('div');
+    header.className = 'group-header';
+    header.textContent = g;
+    container.appendChild(header);
+
+    groupMap[g].forEach(r => {
+      const room  = S.rooms[r.key];
+      const flagCount = room.photos.filter(p => p.flagged).length;
+      let cls = '';
+      if (room.completed) cls = 'done';
+      else if (room.photos.length > 0 || room.note || room.condition) cls = 'in-progress';
+      if (flagCount > 0) cls += ' flagged-room';
+
+      const card = document.createElement('div');
+      card.className = `room-card ${cls}`;
+      card.onclick = () => openRoom(r.key);
+
+      const condHtml = room.condition
+        ? `<span class="cond-badge cond-${room.condition}">${condLabel(room.condition)}</span>`
+        : '';
+      const photoBadge = room.photos.length
+        ? `<span class="photo-count-badge">📷 ${room.photos.length}</span>`
+        : '';
+      const flagBadge = flagCount
+        ? `<span class="flag-count-badge">🚩 ${flagCount}</span>`
+        : '';
+
+      card.innerHTML = `
+        <div class="room-status-dot"></div>
+        <div class="room-card-body">
+          <div class="room-card-name">${r.label}</div>
+          <div class="room-card-meta">${condHtml}${photoBadge}${flagBadge}</div>
+        </div>
+        <div class="room-card-arrow">›</div>`;
+      container.appendChild(card);
+    });
+  });
+
+  updateProgress();
+}
+
+function updateProgress() {
+  const total    = ROOM_DEFS.length;
+  const done     = ROOM_DEFS.filter(r => S.rooms[r.key].completed).length;
+  const pct      = Math.round((done / total) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-label-text').textContent = `${done} of ${total} rooms`;
+  document.getElementById('progress-pct').textContent = pct + '%';
+}
+
+// ════════════════════════════════════════════════════════
+//  ROOM DETAIL SCREEN
+// ════════════════════════════════════════════════════════
+function openRoom(key) {
+  S.curRoom = key;
+  const room = S.rooms[key];
+  const def  = ROOM_DEFS.find(r => r.key === key);
+
+  document.getElementById('room-top-title').textContent = def.label;
+  document.getElementById('room-note-input').value      = room.note;
+
+  // Condition buttons
+  ['good','fair','attention'].forEach(c => {
+    document.getElementById('cond-' + c).classList.toggle('sel', room.condition === c);
+  });
+
+  renderPhotoGrid();
+  show('s-room');
+}
+
+function backToRooms() {
+  renderRoomList();
+  show('s-rooms');
+}
+
+function setCondition(c) {
+  S.rooms[S.curRoom].condition = c;
+  ['good','fair','attention'].forEach(x => {
+    document.getElementById('cond-' + x).classList.toggle('sel', x === c);
+  });
+}
+
+function saveRoomNote(val) {
+  S.rooms[S.curRoom].note = val;
+}
+
+function doneWithRoom() {
+  const room = S.rooms[S.curRoom];
+  if (!room.condition && room.photos.length === 0 && !room.note) {
+    if (!confirm('No condition, photos, or notes added. Mark this room as completed anyway?')) return;
+  }
+  room.completed = true;
+  backToRooms();
+}
+
+// ════════════════════════════════════════════════════════
+//  PHOTOS
+// ════════════════════════════════════════════════════════
+function triggerCamera() {
+  const inp = document.getElementById('photo-input');
+  inp.value = '';
+  inp.click();
+}
+
+function handlePhotos(event) {
+  const files = Array.from(event.target.files);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      S.rooms[S.curRoom].photos.push({
+        id:        'p_' + Date.now() + '_' + Math.random().toString(36).slice(2),
+        file:      file,
+        dataUrl:   e.target.result,
+        flagged:   false,
+        note:      '',
+        timestamp: new Date().toISOString(),
+      });
+      renderPhotoGrid();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderPhotoGrid() {
+  const room   = S.rooms[S.curRoom];
+  const grid   = document.getElementById('photo-grid');
+  const photos = room.photos;
+
+  document.getElementById('photo-count-label').textContent =
+    photos.length ? `(${photos.length} photo${photos.length !== 1 ? 's' : ''})` : '';
+
+  grid.innerHTML = '';
+  photos.forEach((p, i) => {
+    const card = document.createElement('div');
+    card.className = 'photo-card' + (p.flagged ? ' is-flagged' : '');
+    card.dataset.id = p.id;
+
+    card.innerHTML = `
+      <div class="photo-thumb-wrap">
+        <img class="photo-thumb" src="${p.dataUrl}" loading="lazy">
+        <button class="photo-flag-btn ${p.flagged ? 'flagged' : ''}"
+          onclick="toggleFlag('${p.id}')" title="${p.flagged ? 'Remove flag' : 'Flag issue'}">
+          🚩${p.flagged ? ' Flagged' : ' Flag'}
+        </button>
+        <button class="photo-delete-btn" onclick="deletePhoto('${p.id}')" title="Delete">✕</button>
+      </div>
+      <div class="photo-note-area">
+        ${p.flagged ? '<div class="flag-label">⚠ Issue flagged</div>' : ''}
+        <textarea placeholder="${p.flagged ? 'Describe the issue…' : 'Add a note (optional)…'}"
+          oninput="setPhotoNote('${p.id}', this.value)">${p.note}</textarea>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+function toggleFlag(photoId) {
+  const room  = S.rooms[S.curRoom];
+  const photo = room.photos.find(p => p.id === photoId);
+  if (!photo) return;
+  photo.flagged = !photo.flagged;
+  renderPhotoGrid();
+}
+
+function setPhotoNote(photoId, val) {
+  const room  = S.rooms[S.curRoom];
+  const photo = room.photos.find(p => p.id === photoId);
+  if (photo) photo.note = val;
+}
+
+function deletePhoto(photoId) {
+  const room = S.rooms[S.curRoom];
+  room.photos = room.photos.filter(p => p.id !== photoId);
+  renderPhotoGrid();
+}
+
+// ════════════════════════════════════════════════════════
+//  SUMMARY SCREEN
+// ════════════════════════════════════════════════════════
+function showSummary() {
+  const modeLabel   = S.mode === 'checkin' ? 'Check-In' : 'Check-Out';
+  const allPhotos   = ROOM_DEFS.flatMap(r => S.rooms[r.key].photos);
+  const flagged     = allPhotos.filter(p => p.flagged);
+  const doneCount   = ROOM_DEFS.filter(r => S.rooms[r.key].completed).length;
+
+  document.getElementById('summary-title').textContent =
+    `${modeLabel} — Property ${S.property}`;
+  document.getElementById('summary-meta').textContent =
+    `${S.guest || 'No guest'} · ${formatDate(S.date)}`;
+
+  document.getElementById('stat-rooms').textContent  = doneCount;
+  document.getElementById('stat-photos').textContent = allPhotos.length;
+  document.getElementById('stat-flags').textContent  = flagged.length;
+
+  // Flagged section
+  const flagSec = document.getElementById('flagged-section');
+  if (flagged.length) {
+    let html = `<div class="card"><div class="block">
+      <div class="block-label" style="color:var(--red)">🚩 Flagged Items (${flagged.length})</div>
+      <div class="flagged-list">`;
+    ROOM_DEFS.forEach(r => {
+      S.rooms[r.key].photos.filter(p => p.flagged).forEach(p => {
+        html += `<div class="flagged-item">
+          <span class="flagged-item-room">${r.label}</span>
+          <span class="flagged-item-note">${p.note || 'No note added'}</span>
+        </div>`;
+      });
+    });
+    html += '</div></div></div>';
+    flagSec.innerHTML = html;
+  } else {
+    flagSec.innerHTML = '';
+  }
+
+  // Room summary rows
+  const rowsEl = document.getElementById('room-summary-rows');
+  rowsEl.innerHTML = ROOM_DEFS.map(r => {
+    const room     = S.rooms[r.key];
+    const cond     = room.condition ? `<span class="cond-badge cond-${room.condition}">${condLabel(room.condition)}</span>` : '<span style="color:var(--muted);font-size:.72rem;">—</span>';
+    const photos   = room.photos.length ? `<span class="photo-count-badge">📷 ${room.photos.length}</span>` : '';
+    const flags    = room.photos.filter(p=>p.flagged).length;
+    const flagBadge = flags ? `<span class="flag-count-badge">🚩 ${flags}</span>` : '';
+    const check    = room.completed ? '✓' : '';
+    return `<div class="room-summary-row">
+      <div class="rsrow-name">${r.label}</div>
+      <div class="rsrow-meta">${cond}${photos}${flagBadge}</div>
+    </div>`;
+  }).join('');
+
+  show('s-summary');
+}
+
+// ════════════════════════════════════════════════════════
+//  GOOGLE DRIVE SAVE
+// ════════════════════════════════════════════════════════
+const DRIVE_BASE  = 'https://www.googleapis.com/drive/v3';
+const UPLOAD_BASE = 'https://www.googleapis.com/upload/drive/v3';
+
+async function driveJSON(path, opts = {}) {
+  const r = await fetch(`${DRIVE_BASE}${path}`, {
+    ...opts,
+    headers: { 'Authorization': `Bearer ${S.token}`, 'Content-Type': 'application/json', ...(opts.headers||{}) }
+  });
+  if (!r.ok) throw new Error(`Drive API ${r.status}: ${await r.text()}`);
+  return r.json();
+}
+
+async function findFolder(name, parentId) {
+  const q = `name='${name.replace(/'/g,"\\'")}' and mimeType='application/vnd.google-apps.folder' and trashed=false`
+    + (parentId ? ` and '${parentId}' in parents` : '');
+  const d = await driveJSON(`/files?q=${encodeURIComponent(q)}&fields=files(id)&spaces=drive`);
+  return d.files?.[0]?.id || null;
+}
+
+async function createFolder(name, parentId) {
+  const body = { name, mimeType: 'application/vnd.google-apps.folder', ...(parentId ? { parents:[parentId] } : {}) };
+  const d = await driveJSON('/files', { method:'POST', body: JSON.stringify(body) });
+  return d.id;
+}
+
+async function ensureFolder(name, parentId) {
+  return (await findFolder(name, parentId)) || (await createFolder(name, parentId));
+}
+
+async function uploadFile(name, blob, mimeType, folderId) {
+  const meta = JSON.stringify({ name, parents: [folderId] });
+  const form = new FormData();
+  form.append('metadata', new Blob([meta], { type:'application/json' }));
+  form.append('file', blob);
+  const r = await fetch(`${UPLOAD_BASE}/files?uploadType=multipart&fields=id,webViewLink`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${S.token}` },
+    body: form
+  });
+  if (!r.ok) throw new Error(`Upload failed ${r.status}`);
+  return r.json();
+}
+
+function setDriveProgress(pct, msg) {
+  document.getElementById('save-prog-fill').style.width = pct + '%';
+  document.getElementById('save-prog-text').textContent = msg;
+}
+
+async function saveToDrive() {
+  if (!S.token || Date.now() > S.tokenExp) { signIn(); return; }
+
+  const btn = document.getElementById('save-drive-btn');
+  btn.disabled = true;
+  document.getElementById('save-progress-wrap').style.display = 'block';
+  setDriveProgress(2, 'Creating folders…');
+
+  try {
+    const modeLabel   = S.mode === 'checkin' ? 'Check-In' : 'Check-Out';
+    const guestSlug   = (S.guest || 'Guest').replace(/[^a-zA-Z0-9 ]/g,'').trim();
+    const sessionName = `${S.date} — ${guestSlug} — ${modeLabel}`;
+
+    const rootId    = await ensureFolder('JC Investments — Rentals');
+    setDriveProgress(8, 'Finding property folder…');
+    const propId    = await ensureFolder(S.property, rootId);
+    setDriveProgress(12, 'Creating session folder…');
+    const sessionId = await createFolder(sessionName, propId);
+
+    // Count total photos
+    const allPhotos = ROOM_DEFS.flatMap(r => S.rooms[r.key].photos);
+    const total = allPhotos.length + 2; // +2 for JSON + HTML report
+    let uploaded = 0;
+
+    // Upload photos per room
+    let photoNum = 1;
+    for (const def of ROOM_DEFS) {
+      const room = S.rooms[def.key];
+      for (const photo of room.photos) {
+        const flagPart = photo.flagged ? '_FLAGGED' : '';
+        const fileName = `${String(photoNum).padStart(3,'0')}_${def.key}${flagPart}.jpg`;
+        setDriveProgress(12 + Math.round((uploaded / total) * 78), `Uploading ${def.label} (${photoNum}/${allPhotos.length})…`);
+        // Convert dataUrl to blob if file not available
+        const blob = photo.file || dataUrlToBlob(photo.dataUrl);
+        await uploadFile(fileName, blob, 'image/jpeg', sessionId);
+        uploaded++;
+        photoNum++;
+      }
+    }
+
+    // Upload JSON report
+    setDriveProgress(90, 'Saving report…');
+    const report = buildReportJSON();
+    await uploadFile('_report.json', new Blob([JSON.stringify(report, null, 2)], { type:'application/json' }), 'application/json', sessionId);
+    uploaded++;
+
+    // Upload HTML report
+    setDriveProgress(95, 'Saving HTML report…');
+    const html = buildHtmlReport();
+    await uploadFile('_report.html', new Blob([html], { type:'text/html' }), 'text/html', sessionId);
+
+    setDriveProgress(100, 'Done!');
+    document.getElementById('save-progress-wrap').style.display = 'none';
+    document.getElementById('save-success-wrap').style.display  = 'block';
+    document.getElementById('drive-folder-link').href =
+      `https://drive.google.com/drive/folders/${sessionId}`;
+
+  } catch(err) {
+    console.error(err);
+    document.getElementById('save-prog-text').textContent = '⚠ Error: ' + err.message;
+    document.getElementById('save-prog-text').style.color = 'var(--red)';
+    btn.disabled = false;
+  }
+}
+
+function dataUrlToBlob(dataUrl) {
+  const [header, b64] = dataUrl.split(',');
+  const mime = header.match(/:(.*?);/)[1];
+  const bin  = atob(b64);
+  const arr  = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], { type: mime });
+}
+
+// ════════════════════════════════════════════════════════
+//  REPORT GENERATION
+// ════════════════════════════════════════════════════════
+function buildReportJSON() {
+  const modeLabel = S.mode === 'checkin' ? 'Check-In' : 'Check-Out';
+  return {
+    type:     modeLabel,
+    property: S.property,
+    guest:    S.guest,
+    date:     S.date,
+    notes:    S.notes,
+    generated: new Date().toISOString(),
+    rooms: ROOM_DEFS.map(r => {
+      const room = S.rooms[r.key];
+      return {
+        key:       r.key,
+        label:     r.label,
+        condition: room.condition,
+        note:      room.note,
+        completed: room.completed,
+        photos:    room.photos.map(p => ({
+          id:        p.id,
+          flagged:   p.flagged,
+          note:      p.note,
+          timestamp: p.timestamp,
+        }))
+      };
+    })
+  };
+}
+
+function buildHtmlReport() {
+  const modeLabel = S.mode === 'checkin' ? 'Check-In' : 'Check-Out';
+  const allPhotos = ROOM_DEFS.flatMap(r => S.rooms[r.key].photos);
+  const flagged   = allPhotos.filter(p => p.flagged);
+
+  const roomRows = ROOM_DEFS.map(r => {
+    const room = S.rooms[r.key];
+    if (!room.completed && !room.photos.length && !room.note && !room.condition) return '';
+    const cond = room.condition ? `<span style="padding:.15rem .5rem;border-radius:4px;font-size:.75rem;font-weight:700;background:${condBg(room.condition)};color:${condColor(room.condition)}">${condLabel(room.condition)}</span>` : '';
+    const photosHtml = room.photos.map(p =>
+      `<div style="display:inline-block;margin:.25rem;vertical-align:top;width:120px;">
+        <img src="${p.dataUrl}" style="width:120px;height:90px;object-fit:cover;border-radius:6px;border:2px solid ${p.flagged?'#DC2626':'#E2E8F0'}">
+        ${p.flagged ? '<div style="color:#DC2626;font-size:.65rem;font-weight:700;margin-top:.2rem;">🚩 FLAGGED</div>' : ''}
+        ${p.note ? `<div style="font-size:.65rem;color:#64748B;margin-top:.1rem;">${p.note}</div>` : ''}
+      </div>`
+    ).join('');
+    return `<tr style="border-bottom:1px solid #E2E8F0;">
+      <td style="padding:.75rem;font-weight:600;vertical-align:top;width:200px;">${r.label}</td>
+      <td style="padding:.75rem;vertical-align:top;">${cond}</td>
+      <td style="padding:.75rem;vertical-align:top;font-size:.82rem;color:#64748B;">${room.note || ''}</td>
+      <td style="padding:.75rem;vertical-align:top;">${photosHtml}</td>
+    </tr>`;
+  }).join('');
+
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>${modeLabel} — ${S.property} — ${S.date}</title>
+<style>body{font-family:-apple-system,sans-serif;color:#0F172A;max-width:960px;margin:0 auto;padding:2rem;}</style>
+</head><body>
+<h1 style="font-size:1.6rem;font-weight:800;margin-bottom:.3rem;">Property ${modeLabel} Report</h1>
+<p style="color:#64748B;margin-bottom:1.5rem;">Property ${S.property} &nbsp;·&nbsp; ${S.guest || 'No guest'} &nbsp;·&nbsp; ${formatDate(S.date)}</p>
+${S.notes ? `<p style="background:#F1F5F9;padding:.75rem 1rem;border-radius:8px;font-size:.88rem;margin-bottom:1.5rem;">${S.notes}</p>` : ''}
+<div style="display:flex;gap:1rem;margin-bottom:1.5rem;">
+  <div style="background:#F1F5F9;padding:.75rem 1rem;border-radius:8px;text-align:center;flex:1;">
+    <div style="font-size:1.5rem;font-weight:800;">${ROOM_DEFS.filter(r=>S.rooms[r.key].completed).length}</div>
+    <div style="font-size:.7rem;color:#64748B;font-weight:700;text-transform:uppercase;">Rooms</div>
+  </div>
+  <div style="background:#F1F5F9;padding:.75rem 1rem;border-radius:8px;text-align:center;flex:1;">
+    <div style="font-size:1.5rem;font-weight:800;">${allPhotos.length}</div>
+    <div style="font-size:.7rem;color:#64748B;font-weight:700;text-transform:uppercase;">Photos</div>
+  </div>
+  <div style="background:${flagged.length?'#FEE2E2':'#F1F5F9'};padding:.75rem 1rem;border-radius:8px;text-align:center;flex:1;">
+    <div style="font-size:1.5rem;font-weight:800;color:${flagged.length?'#B91C1C':'inherit'}">${flagged.length}</div>
+    <div style="font-size:.7rem;color:#64748B;font-weight:700;text-transform:uppercase;">Flagged</div>
+  </div>
+</div>
+<table style="width:100%;border-collapse:collapse;font-size:.85rem;">
+<thead><tr style="background:#F1F5F9;">
+  <th style="padding:.6rem .75rem;text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:#64748B;">Room</th>
+  <th style="padding:.6rem .75rem;text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:#64748B;">Condition</th>
+  <th style="padding:.6rem .75rem;text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:#64748B;">Note</th>
+  <th style="padding:.6rem .75rem;text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:#64748B;">Photos</th>
+</tr></thead>
+<tbody>${roomRows}</tbody>
+</table>
+<p style="margin-top:2rem;font-size:.72rem;color:#94A3B8;">Generated ${new Date().toLocaleString()}</p>
+</body></html>`;
+}
+
+function downloadReport() {
+  const html = buildHtmlReport();
+  const modeLabel = S.mode === 'checkin' ? 'checkin' : 'checkout';
+  const blob = new Blob([html], { type:'text/html' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `${S.property}_${S.date}_${modeLabel}_report.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ════════════════════════════════════════════════════════
+//  NEW INSPECTION
+// ════════════════════════════════════════════════════════
+function newInspection() {
+  if (!confirm('Start a new inspection? All current data will be cleared.')) return;
+  ROOM_DEFS.forEach(r => {
+    S.rooms[r.key] = { key:r.key, label:r.label, note:'', condition:'', photos:[], completed:false };
+  });
+  S.property = '';
+  S.guest    = '';
+  S.notes    = '';
+  document.getElementById('guest-input').value     = '';
+  document.getElementById('general-notes').value   = '';
+  document.getElementById('date-input').value      = new Date().toISOString().split('T')[0];
+  document.querySelectorAll('.prop-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('save-progress-wrap').style.display = 'none';
+  document.getElementById('save-success-wrap').style.display  = 'none';
+  show('s-setup');
+}
+
+// ════════════════════════════════════════════════════════
+//  UTILITIES
+// ════════════════════════════════════════════════════════
+function condLabel(c) {
+  return { good:'Good', fair:'Fair', attention:'Needs Attention' }[c] || c;
+}
+function condColor(c) {
+  return { good:'#047857', fair:'#B45309', attention:'#B91C1C' }[c] || '#64748B';
+}
+function condBg(c) {
+  return { good:'#D1FAE5', fair:'#FEF3C7', attention:'#FEE2E2' }[c] || '#F1F5F9';
+}
+function formatDate(d) {
+  if (!d) return '';
+  const [y,m,day] = d.split('-');
+  return new Date(y, m-1, day).toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+}
+</script>
+</body>
+</html>
