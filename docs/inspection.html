@@ -626,6 +626,111 @@
     font-weight: 600;
   }
 
+  /* ── Sign-in screen ── */
+  .signin-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1.5rem;
+    gap: 0;
+    background: var(--bg);
+  }
+  .signin-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem 1.75rem;
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+    text-align: center;
+  }
+  .signin-logo {
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    background: var(--navy);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem;
+  }
+  .signin-title { font-size: 1.2rem; font-weight: 800; color: var(--text); }
+  .signin-sub   { font-size: .83rem; color: var(--muted); line-height: 1.55; }
+  .signin-folder {
+    width: 100%;
+    background: #F8FAFC;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: .85rem 1rem;
+    font-size: .75rem;
+    color: var(--muted);
+    line-height: 1.7;
+    text-align: left;
+    font-family: "Menlo", "Consolas", monospace;
+  }
+  .signin-folder-label {
+    font-size: .65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+    margin-bottom: .5rem;
+    font-family: inherit;
+  }
+  .btn-google-large {
+    width: 100%;
+    background: white;
+    border: 1.5px solid var(--border);
+    color: var(--text);
+    padding: .9rem 1.25rem;
+    border-radius: 10px;
+    font-size: .95rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .75rem;
+    transition: box-shadow .15s, border-color .2s;
+  }
+  .btn-google-large:hover { box-shadow: 0 3px 12px rgba(0,0,0,.12); border-color: #CBD5E1; }
+  .signin-note { font-size: .72rem; color: var(--muted); line-height: 1.5; }
+  .signin-no-config {
+    width: 100%;
+    background: var(--amber-lt);
+    border: 1px solid #FCD34D;
+    border-radius: 9px;
+    padding: .75rem .9rem;
+    font-size: .78rem;
+    color: var(--amber);
+    font-weight: 600;
+    text-align: left;
+  }
+  .signin-no-config a { color: var(--amber); }
+  .signin-spinner { font-size: .82rem; color: var(--muted); }
+
+  /* Auth indicator in top bar */
+  .auth-indicator {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .7rem;
+    font-weight: 600;
+    color: rgba(255,255,255,.65);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .auth-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #6EE7B7;
+    flex-shrink: 0;
+  }
+
   /* ── Responsive ── */
   @media (max-width: 480px) {
     .photo-grid { grid-template-columns: 1fr 1fr; }
@@ -641,9 +746,55 @@
 <body>
 
 <!-- ══════════════════════════════════════════════════════════
+     SCREEN 0 — SIGN IN
+══════════════════════════════════════════════════════════ -->
+<div id="s-signin" class="screen active">
+  <div class="top-bar">
+    <a href="index.html" class="back-btn">← Home</a>
+    <div class="top-bar-title">JC Investments Rentals</div>
+    <div class="mode-pill" id="signin-mode-pill">Check-In</div>
+  </div>
+  <div class="signin-wrap">
+    <div class="signin-card">
+
+      <div class="signin-logo">🏠</div>
+      <div class="signin-title">Sign in to begin</div>
+      <div class="signin-sub">Photos and reports are saved directly to your Google Drive. Sign in now so everything is ready before you start walking the property.</div>
+
+      <div id="signin-no-config" class="signin-no-config" style="display:none">
+        ⚠ Google Drive not configured yet. <a href="index.html">Go to Settings on the home page</a> to add your Client ID first.
+      </div>
+
+      <div style="width:100%">
+        <div class="signin-folder-label">Where your files will be saved</div>
+        <div class="signin-folder" id="signin-folder-preview">
+          📁 JC Investments — Rentals/<br>
+          &nbsp;&nbsp;📁 [Property]/<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;📁 [Date] — [Guest] — [Mode]/<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;📷 001_kitchen.jpg<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;📷 002_kitchen_FLAGGED.jpg<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;📄 _report.html
+        </div>
+      </div>
+
+      <button class="btn-google-large" id="signin-btn" onclick="signIn()">
+        <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Sign in with Google
+      </button>
+
+      <div id="signin-spinner" class="signin-spinner" style="display:none">Signing in…</div>
+
+      <div class="signin-note">Only files this app creates are accessible — your existing Drive files are never read or modified.</div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
      SCREEN 1 — SETUP
 ══════════════════════════════════════════════════════════ -->
-<div id="s-setup" class="screen active">
+<div id="s-setup" class="screen">
   <div class="setup-hero">
     <div class="setup-mode-badge" id="setup-mode-badge">Check-In</div>
     <h1 id="setup-title">New Inspection</h1>
@@ -698,6 +849,7 @@
   <div class="top-bar">
     <button class="back-btn" onclick="show('s-setup')">← Back</button>
     <div class="top-bar-title" id="rooms-title">Inspection</div>
+    <div class="auth-indicator" id="rooms-auth-indicator"><div class="auth-dot"></div><span id="rooms-auth-label"></span></div>
     <div class="mode-pill" id="rooms-mode-pill">Check-In</div>
   </div>
   <div class="inspection-strip" id="inspection-strip">
@@ -724,6 +876,7 @@
   <div class="top-bar">
     <button class="back-btn" onclick="backToRooms()">← Rooms</button>
     <div class="top-bar-title" id="room-top-title"></div>
+    <div class="auth-indicator" id="room-auth-indicator"><div class="auth-dot"></div><span id="room-auth-label"></span></div>
     <div class="mode-pill" id="room-mode-pill">Check-In</div>
   </div>
   <div class="scroll-body">
@@ -775,6 +928,7 @@
   <div class="top-bar">
     <button class="back-btn" onclick="show('s-rooms')">← Rooms</button>
     <div class="top-bar-title">Inspection Summary</div>
+    <div class="auth-indicator" id="summary-auth-indicator"><div class="auth-dot"></div><span id="summary-auth-label"></span></div>
     <div class="mode-pill" id="summary-mode-pill">Check-In</div>
   </div>
   <div class="scroll-body">
@@ -816,22 +970,18 @@
       <div class="save-head">☁ Save to Google Drive</div>
       <div class="save-body">
 
-        <div id="no-client-warn" style="display:none" class="no-client-id-warn">
-          ⚠ Google Drive not configured. <a href="index.html" style="color:var(--amber)">Go to Settings on the home page</a> to add your Client ID.
-        </div>
-
         <div id="auth-area">
-          <div id="auth-not-signed-in">
-            <button class="btn-google" onclick="signIn()">
-              <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-              Sign in with Google
-            </button>
-            <div class="auth-hint">Sign in to save photos and the report directly to your Google Drive.</div>
-          </div>
-          <div id="auth-signed-in" style="display:none">
-            <div class="signed-in-row">✓ Signed in — ready to save</div>
+          <div id="save-ready-area">
+            <div class="signed-in-row" id="save-account-row">✓ Signed in — ready to save</div>
             <button class="btn-save-drive" id="save-drive-btn" onclick="saveToDrive()">
               ☁ Save to Google Drive
+            </button>
+          </div>
+          <div id="save-reauth-area" style="display:none">
+            <div class="auth-hint" style="color:var(--amber);font-weight:600;">⚠ Session expired. Re-authenticate to save.</div>
+            <button class="btn-google-large" onclick="reAuth()" style="margin-top:.5rem">
+              <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+              Sign in again
             </button>
           </div>
         </div>
@@ -912,9 +1062,10 @@ let tokenClient = null;
   const params = new URLSearchParams(window.location.search);
   S.mode = params.get('mode') === 'checkout' ? 'checkout' : 'checkin';
 
-  // Apply mode classes and labels
+  // Apply mode classes and labels everywhere
   document.body.classList.toggle('mode-checkout', S.mode === 'checkout');
   const modeLabel = S.mode === 'checkin' ? 'Check-In' : 'Check-Out';
+  document.getElementById('signin-mode-pill').textContent  = modeLabel;
   document.getElementById('setup-mode-badge').textContent  = modeLabel;
   document.getElementById('setup-title').textContent       = `New ${modeLabel}`;
   document.getElementById('rooms-mode-pill').textContent   = modeLabel;
@@ -929,9 +1080,10 @@ let tokenClient = null;
     S.rooms[r.key] = { key: r.key, label: r.label, note: '', condition: '', photos: [], completed: false };
   });
 
-  // Warn if no Drive configured
+  // Show no-config warning on sign-in screen if needed
   if (!localStorage.getItem('gClientId')) {
-    document.getElementById('no-client-warn').style.display = 'block';
+    document.getElementById('signin-no-config').style.display = 'block';
+    document.getElementById('signin-btn').style.display       = 'none';
   }
 })();
 
@@ -943,15 +1095,37 @@ function initAuth() {
   if (!clientId || !window.google) return;
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: clientId,
-    scope: 'https://www.googleapis.com/auth/drive.file',
-    callback: (resp) => {
-      if (resp.error) { alert('Sign-in failed: ' + resp.error); return; }
-      S.token   = resp.access_token;
+    scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email',
+    callback: async (resp) => {
+      if (resp.error) {
+        document.getElementById('signin-spinner').style.display = 'none';
+        document.getElementById('signin-btn').style.display     = 'flex';
+        alert('Sign-in failed: ' + resp.error);
+        return;
+      }
+      S.token    = resp.access_token;
       S.tokenExp = Date.now() + ((resp.expires_in - 60) * 1000);
-      document.getElementById('auth-not-signed-in').style.display = 'none';
-      document.getElementById('auth-signed-in').style.display     = 'flex';
-      document.getElementById('auth-signed-in').style.flexDirection = 'column';
-      document.getElementById('auth-signed-in').style.gap = '.75rem';
+
+      // Fetch user email for display
+      try {
+        const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { 'Authorization': `Bearer ${S.token}` }
+        });
+        const u = await r.json();
+        S.userEmail = u.email || 'Signed in';
+      } catch(e) {
+        S.userEmail = 'Signed in';
+      }
+
+      updateAuthIndicators();
+
+      // If this was called from reAuth (already on summary), stay there
+      if (document.getElementById('s-summary').classList.contains('active')) {
+        onReAuthSuccess();
+      } else {
+        // Normal flow: sign-in screen → setup
+        show('s-setup');
+      }
     }
   });
 }
@@ -961,9 +1135,43 @@ function signIn() {
     alert('Google Drive not configured. Add your Client ID on the home page first.');
     return;
   }
-  if (!tokenClient) { initAuth(); }
+  if (!tokenClient) initAuth();
   if (!tokenClient) { alert('Could not initialize Google Sign-In. Check your Client ID.'); return; }
+  document.getElementById('signin-spinner').style.display = 'block';
+  document.getElementById('signin-btn').style.display     = 'none';
   tokenClient.requestAccessToken({ prompt: '' });
+}
+
+// Re-auth if token expired during a long inspection
+function reAuth() {
+  if (!tokenClient) initAuth();
+  tokenClient.requestAccessToken({ prompt: '' });
+}
+
+function onReAuthSuccess() {
+  document.getElementById('save-reauth-area').style.display = 'none';
+  document.getElementById('save-ready-area').style.display  = 'block';
+  updateAuthIndicators();
+}
+
+function updateAuthIndicators() {
+  const label = S.userEmail ? S.userEmail.split('@')[0] : '';
+  ['rooms','room','summary'].forEach(id => {
+    const el = document.getElementById(id + '-auth-label');
+    if (el) el.textContent = label;
+  });
+  // Update summary save row
+  const row = document.getElementById('save-account-row');
+  if (row) row.textContent = `✓ ${S.userEmail || 'Signed in'} — ready to save`;
+}
+
+function checkTokenBeforeSave() {
+  if (!S.token || Date.now() > S.tokenExp) {
+    document.getElementById('save-ready-area').style.display  = 'none';
+    document.getElementById('save-reauth-area').style.display = 'block';
+    return false;
+  }
+  return true;
 }
 
 // ════════════════════════════════════════════════════════
@@ -1298,7 +1506,7 @@ function setDriveProgress(pct, msg) {
 }
 
 async function saveToDrive() {
-  if (!S.token || Date.now() > S.tokenExp) { signIn(); return; }
+  if (!checkTokenBeforeSave()) return;
 
   const btn = document.getElementById('save-drive-btn');
   btn.disabled = true;
@@ -1489,7 +1697,19 @@ function newInspection() {
   document.querySelectorAll('.prop-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('save-progress-wrap').style.display = 'none';
   document.getElementById('save-success-wrap').style.display  = 'none';
-  show('s-setup');
+  document.getElementById('save-ready-area').style.display    = 'block';
+  document.getElementById('save-reauth-area').style.display   = 'none';
+  // Reset token so new session requires fresh sign-in
+  S.token    = null;
+  S.tokenExp = 0;
+  S.userEmail = '';
+  ['rooms','room','summary'].forEach(id => {
+    const el = document.getElementById(id + '-auth-label');
+    if (el) el.textContent = '';
+  });
+  document.getElementById('signin-spinner').style.display = 'none';
+  document.getElementById('signin-btn').style.display     = 'flex';
+  show('s-signin');
 }
 
 // ════════════════════════════════════════════════════════
