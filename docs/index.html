@@ -47,24 +47,6 @@
   .brand-name { font-size: 1.05rem; font-weight: 800; letter-spacing: -.01em; }
   .brand-sub  { font-size: .7rem; color: rgba(255,255,255,.55); font-weight: 400; letter-spacing: .06em; text-transform: uppercase; margin-top: 2px; }
 
-  #auth-pill {
-    display: flex;
-    align-items: center;
-    gap: .5rem;
-    padding: .35rem .85rem;
-    border-radius: 20px;
-    font-size: .75rem;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    font-family: inherit;
-    transition: opacity .2s;
-    white-space: nowrap;
-  }
-  #auth-pill.signed-out { background: rgba(255,255,255,.12); color: rgba(255,255,255,.8); }
-  #auth-pill.signed-in  { background: rgba(4,120,87,.3); color: #6EE7B7; }
-  #auth-pill:hover { opacity: .85; }
-
   /* ── Hero ── */
   .hero {
     background: var(--navy-lt);
@@ -169,45 +151,101 @@
     align-self: flex-start;
   }
 
-  /* ── Settings modal ── */
-  .modal-backdrop {
-    display: none;
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,.5);
-    z-index: 100;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
-  }
-  .modal-backdrop.open { display: flex; }
-  .modal {
-    background: var(--surface);
-    border-radius: 14px;
-    padding: 1.75rem;
+  /* ── Developer section ── */
+  .dev-section {
+    max-width: 900px;
+    margin: 0 auto;
     width: 100%;
-    max-width: 480px;
-    display: flex;
-    flex-direction: column;
-    gap: 1.1rem;
+    padding: 0 1.5rem 1.75rem;
   }
-  .modal-title { font-size: 1.1rem; font-weight: 800; color: var(--text); }
-  .modal-desc  { font-size: .82rem; color: var(--muted); line-height: 1.55; }
-  .modal label { font-size: .72rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; display: block; margin-bottom: .35rem; }
-  .modal input[type="text"] {
-    width: 100%;
-    padding: .65rem .9rem;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    font-size: .9rem;
-    font-family: monospace;
-    outline: none;
-    transition: border-color .2s;
+  .dev-section-label {
+    font-size: .65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    padding-top: 1.25rem;
+    margin-bottom: 1rem;
   }
-  .modal input:focus { border-color: var(--teal); }
-  .modal-help { font-size: .75rem; color: var(--muted); line-height: 1.55; }
-  .modal-help a { color: var(--teal); }
-  .modal-actions { display: flex; gap: .65rem; justify-content: flex-end; }
 
+  /* Drive test card — not a link, stays full width up to 420px */
+  .card-drivetest {
+    max-width: 420px;
+    cursor: default;
+  }
+  .card-drivetest::before { background: var(--amber); }
+  .card-drivetest .card-icon { background: #FEF3C7; }
+  .card-drivetest .card-label { color: var(--amber); }
+
+  /* Steps inside the test card */
+  .dt-step {
+    display: none;
+    flex-direction: column;
+    gap: .7rem;
+  }
+  .dt-step.active { display: flex; }
+
+  .dt-btn {
+    display: inline-flex; align-items: center; gap: .45rem;
+    padding: .6rem 1.1rem;
+    border: none; border-radius: 8px;
+    font-family: inherit; font-size: .84rem; font-weight: 600;
+    cursor: pointer; transition: filter .15s;
+    align-self: flex-start;
+  }
+  .dt-btn:hover:not(:disabled) { filter: brightness(1.08); }
+  .dt-btn:disabled { opacity: .55; cursor: not-allowed; }
+  .dt-btn-amber  { background: var(--amber); color: white; }
+  .dt-btn-teal   { background: var(--teal);  color: white; }
+  .dt-btn-gray   { background: var(--bg);    color: var(--muted); border: 1px solid var(--border); }
+
+  .dt-status {
+    font-size: .8rem;
+    color: var(--muted);
+    line-height: 1.5;
+    min-height: 1.2em;
+  }
+  .dt-status.ok    { color: var(--green); }
+  .dt-status.err   { color: var(--red); }
+
+  .dt-progress-wrap { display: none; gap: .4rem; flex-direction: column; }
+  .dt-progress-wrap.visible { display: flex; }
+  .dt-progress-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .dt-progress-fill {
+    height: 100%;
+    background: var(--teal);
+    border-radius: 3px;
+    transition: width .3s;
+    width: 0%;
+  }
+  .dt-progress-text { font-size: .75rem; color: var(--muted); }
+
+  .dt-results {
+    display: none;
+    flex-direction: column;
+    gap: .45rem;
+  }
+  .dt-results.visible { display: flex; }
+  .dt-result-item {
+    font-size: .78rem;
+    padding: .4rem .7rem;
+    border-radius: 6px;
+    background: #F0FDF4;
+    color: var(--green);
+    word-break: break-all;
+  }
+  .dt-result-item.fail {
+    background: #FEF2F2;
+    color: var(--red);
+  }
+
+  /* ── Buttons (shared) ── */
   button {
     display: inline-flex; align-items: center; gap: .4rem;
     padding: .6rem 1.25rem;
@@ -216,8 +254,6 @@
     cursor: pointer; transition: filter .15s;
   }
   button:hover { filter: brightness(1.08); }
-  .btn-primary  { background: var(--navy);  color: white; }
-  .btn-cancel   { background: var(--bg);    color: var(--muted); }
 
   /* ── Footer ── */
   footer {
@@ -280,10 +316,256 @@
 
 </div>
 
+<!-- ── Developer Tools ── -->
+<div class="dev-section">
+  <div class="dev-section-label">Developer Tools</div>
+
+  <div class="card card-drivetest" id="dt-card">
+    <div class="card-icon">🔧</div>
+    <div class="card-label">Diagnostics</div>
+    <div class="card-title">Drive Test</div>
+    <div class="card-desc">Sign in and upload test photos to verify Google Drive is connected correctly. Files go to <em>JC Investments — Rentals / _Drive Test</em>.</div>
+
+    <!-- Step 1: Sign in -->
+    <div class="dt-step active" id="dt-step-signin">
+      <button class="dt-btn dt-btn-amber" id="dt-signin-btn" onclick="dtSignIn()">Sign in with Google</button>
+      <div class="dt-status" id="dt-signin-status"></div>
+    </div>
+
+    <!-- Step 2: Pick photos + upload -->
+    <div class="dt-step" id="dt-step-upload">
+      <div class="dt-status ok" id="dt-account-label"></div>
+      <input type="file" id="dt-file-input" accept="image/*" multiple style="display:none" onchange="dtFilesSelected()">
+      <div style="display:flex; gap:.6rem; flex-wrap:wrap;">
+        <button class="dt-btn dt-btn-teal" onclick="document.getElementById('dt-file-input').click()">Choose Photos</button>
+        <button class="dt-btn dt-btn-amber" id="dt-upload-btn" onclick="dtUpload()" disabled>Upload to Drive</button>
+        <button class="dt-btn dt-btn-gray" onclick="dtReset()">Sign Out</button>
+      </div>
+      <div class="dt-status" id="dt-file-status"></div>
+      <div class="dt-progress-wrap" id="dt-progress-wrap">
+        <div class="dt-progress-bar"><div class="dt-progress-fill" id="dt-prog-fill"></div></div>
+        <div class="dt-progress-text" id="dt-prog-text"></div>
+      </div>
+      <div class="dt-results" id="dt-results"></div>
+    </div>
+  </div>
+</div>
+
 <footer>
   JC Investments &nbsp;·&nbsp; Rental Inspection System &nbsp;·&nbsp; 100% local &amp; private
 </footer>
 
-<script></script>
+<script src="https://accounts.google.com/gsi/client" async></script>
+<script>
+  const CLIENT_ID   = '1052527529940-o34ogstcjcigvelljitffehudjuv5ao8.apps.googleusercontent.com';
+  const DRIVE_BASE  = 'https://www.googleapis.com/drive/v3';
+  const UPLOAD_BASE = 'https://www.googleapis.com/upload/drive/v3';
+  const TEST_FOLDER = '_Drive Test';
+  const ROOT_FOLDER = 'JC Investments — Rentals';
+
+  let dtToken    = null;
+  let dtTokenExp = 0;
+  let dtClient   = null;
+  let dtFiles    = [];
+
+  // ── Auth ──────────────────────────────────────────────────────────────────
+
+  function dtInitClient() {
+    if (!window.google || dtClient) return;
+    dtClient = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email',
+      callback: async (resp) => {
+        const signinBtn = document.getElementById('dt-signin-btn');
+        const signinStatus = document.getElementById('dt-signin-status');
+
+        if (resp.error) {
+          signinBtn.disabled = false;
+          signinBtn.textContent = 'Sign in with Google';
+          signinStatus.className = 'dt-status err';
+          signinStatus.textContent = 'Sign-in failed: ' + resp.error;
+          return;
+        }
+
+        dtToken    = resp.access_token;
+        dtTokenExp = Date.now() + ((resp.expires_in - 60) * 1000);
+
+        let email = 'Signed in';
+        try {
+          const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+            headers: { Authorization: `Bearer ${dtToken}` }
+          });
+          const u = await r.json();
+          email = u.email || 'Signed in';
+        } catch(e) {}
+
+        document.getElementById('dt-account-label').textContent = '✓ ' + email;
+        document.getElementById('dt-step-signin').classList.remove('active');
+        document.getElementById('dt-step-upload').classList.add('active');
+      }
+    });
+  }
+
+  function dtSignIn() {
+    dtInitClient();
+    if (!dtClient) {
+      document.getElementById('dt-signin-status').className = 'dt-status err';
+      document.getElementById('dt-signin-status').textContent = 'Google Sign-In not loaded yet — please wait a moment and try again.';
+      return;
+    }
+    const btn = document.getElementById('dt-signin-btn');
+    btn.disabled = true;
+    btn.textContent = 'Signing in…';
+    document.getElementById('dt-signin-status').textContent = '';
+    dtClient.requestAccessToken({ prompt: '' });
+  }
+
+  function dtReset() {
+    dtToken = null; dtTokenExp = 0; dtClient = null; dtFiles = [];
+    document.getElementById('dt-step-upload').classList.remove('active');
+    document.getElementById('dt-step-signin').classList.add('active');
+    const btn = document.getElementById('dt-signin-btn');
+    btn.disabled = false;
+    btn.textContent = 'Sign in with Google';
+    document.getElementById('dt-signin-status').textContent = '';
+    document.getElementById('dt-file-status').textContent = '';
+    document.getElementById('dt-progress-wrap').classList.remove('visible');
+    document.getElementById('dt-results').classList.remove('visible');
+    document.getElementById('dt-results').innerHTML = '';
+    document.getElementById('dt-upload-btn').disabled = true;
+    document.getElementById('dt-file-input').value = '';
+    if (window.google) google.accounts.oauth2.revoke(dtToken || '', () => {});
+  }
+
+  // ── File selection ────────────────────────────────────────────────────────
+
+  function dtFilesSelected() {
+    const input = document.getElementById('dt-file-input');
+    dtFiles = Array.from(input.files);
+    const status = document.getElementById('dt-file-status');
+    const uploadBtn = document.getElementById('dt-upload-btn');
+    if (dtFiles.length === 0) {
+      status.className = 'dt-status';
+      status.textContent = '';
+      uploadBtn.disabled = true;
+    } else {
+      status.className = 'dt-status';
+      status.textContent = dtFiles.length + ' photo' + (dtFiles.length > 1 ? 's' : '') + ' selected';
+      uploadBtn.disabled = false;
+    }
+    document.getElementById('dt-results').classList.remove('visible');
+    document.getElementById('dt-results').innerHTML = '';
+  }
+
+  // ── Drive helpers ─────────────────────────────────────────────────────────
+
+  async function driveJSON(path, opts = {}) {
+    const r = await fetch(DRIVE_BASE + path, {
+      ...opts,
+      headers: { Authorization: `Bearer ${dtToken}`, 'Content-Type': 'application/json', ...(opts.headers || {}) }
+    });
+    if (!r.ok) throw new Error(`Drive API ${r.status}: ${await r.text()}`);
+    return r.json();
+  }
+
+  async function findFolder(name, parentId) {
+    const q = `name='${name.replace(/'/g,"\\'")}' and mimeType='application/vnd.google-apps.folder' and trashed=false`
+      + (parentId ? ` and '${parentId}' in parents` : '');
+    const d = await driveJSON(`/files?q=${encodeURIComponent(q)}&fields=files(id)&spaces=drive`);
+    return d.files?.[0]?.id || null;
+  }
+
+  async function createFolder(name, parentId) {
+    const body = { name, mimeType: 'application/vnd.google-apps.folder', ...(parentId ? { parents: [parentId] } : {}) };
+    const d = await driveJSON('/files', { method: 'POST', body: JSON.stringify(body) });
+    return d.id;
+  }
+
+  async function ensureFolder(name, parentId) {
+    return (await findFolder(name, parentId)) || (await createFolder(name, parentId));
+  }
+
+  async function uploadFile(file, folderId) {
+    const meta = JSON.stringify({ name: file.name, parents: [folderId] });
+    const form = new FormData();
+    form.append('metadata', new Blob([meta], { type: 'application/json' }));
+    form.append('file', file);
+    const r = await fetch(`${UPLOAD_BASE}/files?uploadType=multipart&fields=id,webViewLink`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${dtToken}` },
+      body: form
+    });
+    if (!r.ok) throw new Error(`Upload failed ${r.status}: ${await r.text()}`);
+    return r.json();
+  }
+
+  // ── Upload flow ───────────────────────────────────────────────────────────
+
+  async function dtUpload() {
+    if (!dtToken || Date.now() > dtTokenExp) {
+      document.getElementById('dt-file-status').className = 'dt-status err';
+      document.getElementById('dt-file-status').textContent = 'Session expired — please sign out and sign in again.';
+      return;
+    }
+    if (dtFiles.length === 0) return;
+
+    const uploadBtn  = document.getElementById('dt-upload-btn');
+    const progWrap   = document.getElementById('dt-progress-wrap');
+    const progFill   = document.getElementById('dt-prog-fill');
+    const progText   = document.getElementById('dt-prog-text');
+    const results    = document.getElementById('dt-results');
+    const fileStatus = document.getElementById('dt-file-status');
+
+    uploadBtn.disabled = true;
+    progWrap.classList.add('visible');
+    results.classList.remove('visible');
+    results.innerHTML = '';
+    fileStatus.textContent = '';
+
+    const setProgress = (pct, msg) => {
+      progFill.style.width = pct + '%';
+      progText.textContent = msg;
+    };
+
+    try {
+      setProgress(5, 'Finding root folder…');
+      const rootId = await ensureFolder(ROOT_FOLDER);
+      setProgress(20, 'Finding test folder…');
+      const testId = await ensureFolder(TEST_FOLDER, rootId);
+      setProgress(30, 'Starting uploads…');
+
+      const total = dtFiles.length;
+      for (let i = 0; i < total; i++) {
+        const file = dtFiles[i];
+        setProgress(30 + Math.round(((i) / total) * 65), `Uploading ${file.name} (${i + 1}/${total})…`);
+        try {
+          const result = await uploadFile(file, testId);
+          const item = document.createElement('div');
+          item.className = 'dt-result-item';
+          item.textContent = '✓ ' + file.name + (result.webViewLink ? ' — uploaded' : '');
+          results.appendChild(item);
+        } catch (e) {
+          const item = document.createElement('div');
+          item.className = 'dt-result-item fail';
+          item.textContent = '✗ ' + file.name + ': ' + e.message;
+          results.appendChild(item);
+        }
+      }
+
+      setProgress(100, 'Done!');
+      results.classList.add('visible');
+      fileStatus.className = 'dt-status ok';
+      fileStatus.textContent = 'Check Google Drive → JC Investments — Rentals → _Drive Test';
+
+    } catch (e) {
+      setProgress(0, '');
+      progWrap.classList.remove('visible');
+      fileStatus.className = 'dt-status err';
+      fileStatus.textContent = 'Error: ' + e.message;
+    } finally {
+      uploadBtn.disabled = false;
+    }
+  }
+</script>
 </body>
 </html>
