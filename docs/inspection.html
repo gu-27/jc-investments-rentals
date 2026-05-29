@@ -1080,19 +1080,14 @@ let tokenClient = null;
     S.rooms[r.key] = { key: r.key, label: r.label, note: '', condition: '', photos: [], completed: false };
   });
 
-  // Show no-config warning on sign-in screen if needed
-  if (!localStorage.getItem('gClientId')) {
-    document.getElementById('signin-no-config').style.display = 'block';
-    document.getElementById('signin-btn').style.display       = 'none';
-  }
 })();
 
 // ════════════════════════════════════════════════════════
 //  GOOGLE AUTH
 // ════════════════════════════════════════════════════════
 function initAuth() {
-  const clientId = localStorage.getItem('gClientId');
-  if (!clientId || !window.google) return;
+  const clientId = '1052527529940-o34ogstcjcigvelljitffehudjuv5ao8.apps.googleusercontent.com';
+  if (!window.google) return;
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: clientId,
     scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email',
@@ -1131,10 +1126,6 @@ function initAuth() {
 }
 
 function signIn() {
-  if (!localStorage.getItem('gClientId')) {
-    alert('Google Drive not configured. Add your Client ID on the home page first.');
-    return;
-  }
   if (!tokenClient) initAuth();
   if (!tokenClient) { alert('Could not initialize Google Sign-In. Check your Client ID.'); return; }
   document.getElementById('signin-spinner').style.display = 'block';

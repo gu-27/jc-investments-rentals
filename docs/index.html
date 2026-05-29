@@ -237,7 +237,6 @@
     <span class="brand-name">JC Investments</span>
     <span class="brand-sub">Rental Inspection System</span>
   </div>
-  <button id="auth-pill" class="signed-out" onclick="toggleSettings()">⚙ Google Drive Setup</button>
 </header>
 
 <div class="hero">
@@ -281,57 +280,10 @@
 
 </div>
 
-<!-- Settings / Drive Setup Modal -->
-<div class="modal-backdrop" id="settings-modal">
-  <div class="modal">
-    <div class="modal-title">⚙ Google Drive Setup</div>
-    <div class="modal-desc">Connect a Google account so inspections automatically save photos and reports to your Drive. You only need to do this once per device.</div>
-    <div>
-      <label for="client-id-input">Google OAuth Client ID</label>
-      <input type="text" id="client-id-input" placeholder="123456789-abc…apps.googleusercontent.com">
-    </div>
-    <div class="modal-help">
-      To get a Client ID: go to <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a> → Create Project → Enable Drive API → OAuth 2.0 Credentials → Web Application. Add <strong id="origin-display"></strong> as an authorized JavaScript origin.
-    </div>
-    <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeSettings()">Cancel</button>
-      <button class="btn-primary" onclick="saveClientId()">Save &amp; Connect</button>
-    </div>
-  </div>
-</div>
-
 <footer>
   JC Investments &nbsp;·&nbsp; Rental Inspection System &nbsp;·&nbsp; 100% local &amp; private
 </footer>
 
-<script>
-  // Show current origin for setup instructions
-  document.getElementById('origin-display').textContent = window.location.origin;
-
-  // Pre-fill saved client ID
-  const saved = localStorage.getItem('gClientId') || '';
-  if (saved) {
-    document.getElementById('client-id-input').value = saved;
-    document.getElementById('auth-pill').textContent = '✓ Drive Connected';
-    document.getElementById('auth-pill').classList.replace('signed-out', 'signed-in');
-  }
-
-  function toggleSettings() { document.getElementById('settings-modal').classList.add('open'); }
-  function closeSettings()  { document.getElementById('settings-modal').classList.remove('open'); }
-
-  function saveClientId() {
-    const val = document.getElementById('client-id-input').value.trim();
-    if (!val) { alert('Please enter your Google Client ID.'); return; }
-    localStorage.setItem('gClientId', val);
-    document.getElementById('auth-pill').textContent = '✓ Drive Connected';
-    document.getElementById('auth-pill').classList.replace('signed-out', 'signed-in');
-    closeSettings();
-  }
-
-  // Close modal on backdrop click
-  document.getElementById('settings-modal').addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) closeSettings();
-  });
-</script>
+<script></script>
 </body>
 </html>
