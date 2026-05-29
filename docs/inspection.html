@@ -616,16 +616,6 @@
   .drive-link { color: #1A73E8; font-size: .8rem; font-weight: 600; text-decoration: none; }
   .drive-link:hover { text-decoration: underline; }
 
-  .no-client-id-warn {
-    background: var(--amber-lt);
-    border: 1px solid #FCD34D;
-    border-radius: 8px;
-    padding: .75rem .9rem;
-    font-size: .78rem;
-    color: var(--amber);
-    font-weight: 600;
-  }
-
   /* ── Sign-in screen ── */
   .signin-wrap {
     flex: 1;
@@ -699,18 +689,6 @@
   }
   .btn-google-large:hover { box-shadow: 0 3px 12px rgba(0,0,0,.12); border-color: #CBD5E1; }
   .signin-note { font-size: .72rem; color: var(--muted); line-height: 1.5; }
-  .signin-no-config {
-    width: 100%;
-    background: var(--amber-lt);
-    border: 1px solid #FCD34D;
-    border-radius: 9px;
-    padding: .75rem .9rem;
-    font-size: .78rem;
-    color: var(--amber);
-    font-weight: 600;
-    text-align: left;
-  }
-  .signin-no-config a { color: var(--amber); }
   .signin-spinner { font-size: .82rem; color: var(--muted); }
 
   /* Auth indicator in top bar */
@@ -761,10 +739,6 @@
       <div class="signin-title">Sign in to begin</div>
       <div class="signin-sub">Photos and reports are saved directly to your Google Drive. Sign in now so everything is ready before you start walking the property.</div>
 
-      <div id="signin-no-config" class="signin-no-config" style="display:none">
-        ⚠ Google Drive not configured yet. <a href="index.html">Go to Settings on the home page</a> to add your Client ID first.
-      </div>
-
       <div style="width:100%">
         <div class="signin-folder-label">Where your files will be saved</div>
         <div class="signin-folder" id="signin-folder-preview">
@@ -805,9 +779,9 @@
       <div class="block">
         <div class="block-label">Property</div>
         <div class="property-grid">
-          <button class="prop-btn" onclick="selectProperty('1919')">1919</button>
-          <button class="prop-btn" onclick="selectProperty('1933')">1933</button>
-          <button class="prop-btn" onclick="selectProperty('1945')">1945</button>
+          <button class="prop-btn" onclick="selectProperty('1919', this)">1919</button>
+          <button class="prop-btn" onclick="selectProperty('1933', this)">1933</button>
+          <button class="prop-btn" onclick="selectProperty('1945', this)">1945</button>
           <button class="prop-btn coming-soon" disabled title="Coming soon">402</button>
           <button class="prop-btn coming-soon" disabled title="Coming soon">1608</button>
         </div>
@@ -847,7 +821,7 @@
 ══════════════════════════════════════════════════════════ -->
 <div id="s-rooms" class="screen">
   <div class="top-bar">
-    <button class="back-btn" onclick="show('s-setup')">← Back</button>
+    <button class="back-btn" onclick="backToSetup()">← Back</button>
     <div class="top-bar-title" id="rooms-title">Inspection</div>
     <div class="auth-indicator" id="rooms-auth-indicator"><div class="auth-dot"></div><span id="rooms-auth-label"></span></div>
     <div class="mode-pill" id="rooms-mode-pill">Check-In</div>
@@ -909,7 +883,7 @@
           <span id="photo-count-label" style="font-weight:400; text-transform:none; letter-spacing:0; font-size:.72rem;"></span>
         </div>
         <button class="camera-btn" onclick="triggerCamera()">📷 Add Photo</button>
-        <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none" onchange="handlePhotos(event)">
+        <input type="file" id="photo-input" accept="image/*" multiple style="display:none" onchange="handlePhotos(event)">
         <div id="photo-grid" class="photo-grid"></div>
       </div>
     </div>
@@ -1041,15 +1015,16 @@ const ROOM_DEFS = [
 //  STATE
 // ════════════════════════════════════════════════════════
 const S = {
-  mode:     'checkin',
-  property: '',
-  guest:    '',
-  date:     new Date().toISOString().split('T')[0],
-  notes:    '',
-  rooms:    {},   // key → { key, label, note, condition, photos:[], completed }
-  curRoom:  '',
-  token:    null,
-  tokenExp: 0,
+  mode:      'checkin',
+  property:  '',
+  guest:     '',
+  date:      new Date().toISOString().split('T')[0],
+  notes:     '',
+  rooms:     {},   // key → { key, label, note, condition, photos:[], completed }
+  curRoom:   '',
+  token:     null,
+  tokenExp:  0,
+  userEmail: '',
 };
 
 let tokenClient = null;
@@ -1177,16 +1152,17 @@ function show(id) {
 // ════════════════════════════════════════════════════════
 //  SETUP SCREEN
 // ════════════════════════════════════════════════════════
-function selectProperty(prop) {
+function selectProperty(prop, btn) {
   S.property = prop;
   document.querySelectorAll('.prop-btn').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
+  btn.classList.add('active');
 }
 
 function beginInspection() {
   if (!S.property) { alert('Please select a property.'); return; }
+  S.date = document.getElementById('date-input').value;
+  if (!S.date) { alert('Please enter an inspection date.'); return; }
   S.guest = document.getElementById('guest-input').value.trim();
-  S.date  = document.getElementById('date-input').value;
   S.notes = document.getElementById('general-notes').value.trim();
 
   // Update rooms header strip
@@ -1282,6 +1258,14 @@ function openRoom(key) {
 
   renderPhotoGrid();
   show('s-room');
+}
+
+function backToSetup() {
+  const hasProgress = ROOM_DEFS.some(r =>
+    S.rooms[r.key].completed || S.rooms[r.key].photos.length > 0 || S.rooms[r.key].note
+  );
+  if (hasProgress && !confirm('Go back to setup? Your room progress will be kept.')) return;
+  show('s-setup');
 }
 
 function backToRooms() {
@@ -1435,7 +1419,6 @@ function showSummary() {
     const photos   = room.photos.length ? `<span class="photo-count-badge">📷 ${room.photos.length}</span>` : '';
     const flags    = room.photos.filter(p=>p.flagged).length;
     const flagBadge = flags ? `<span class="flag-count-badge">🚩 ${flags}</span>` : '';
-    const check    = room.completed ? '✓' : '';
     return `<div class="room-summary-row">
       <div class="rsrow-name">${r.label}</div>
       <div class="rsrow-meta">${cond}${photos}${flagBadge}</div>
@@ -1513,7 +1496,7 @@ async function saveToDrive() {
     setDriveProgress(8, 'Finding property folder…');
     const propId    = await ensureFolder(S.property, rootId);
     setDriveProgress(12, 'Creating session folder…');
-    const sessionId = await createFolder(sessionName, propId);
+    const sessionId = await ensureFolder(sessionName, propId);
 
     // Count total photos
     const allPhotos = ROOM_DEFS.flatMap(r => S.rooms[r.key].photos);
