@@ -1070,7 +1070,6 @@
 </div>
 
 <!-- Google Identity Services -->
-<script src="https://accounts.google.com/gsi/client" async onload="initAuth()"></script>
 
 <script>
 // ════════════════════════════════════════════════════════
@@ -1115,12 +1114,14 @@ const S = {
   userEmail:        '',
 };
 
-let tokenClient = null;
-
 // ════════════════════════════════════════════════════════
 //  INIT
 // ════════════════════════════════════════════════════════
-(function init() {
+(async function init() {
+  // Handle OAuth redirect return (must run before anything else)
+  const didAuth = await handleAuthRedirect();
+  if (didAuth) return; // handleAuthRedirect calls show() itself
+
   // Read mode from URL
   const params = new URLSearchParams(window.location.search);
   S.mode = params.get('mode') === 'checkout' ? 'checkout' : 'checkin';
@@ -1146,54 +1147,70 @@ let tokenClient = null;
 })();
 
 // ════════════════════════════════════════════════════════
-//  GOOGLE AUTH
+//  GOOGLE AUTH  (redirect flow — works on mobile Safari)
 // ════════════════════════════════════════════════════════
-function initAuth() {
-  const clientId = '1052527529940-o34ogstcjcigvelljitffehudjuv5ao8.apps.googleusercontent.com';
-  if (!window.google) return;
-  tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: clientId,
-    scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email',
-    callback: async (resp) => {
-      if (resp.error) {
-        document.getElementById('signin-spinner').style.display = 'none';
-        document.getElementById('signin-btn').style.display     = 'flex';
-        alert('Sign-in failed: ' + resp.error);
-        return;
-      }
-      S.token    = resp.access_token;
-      S.tokenExp = Date.now() + ((resp.expires_in - 60) * 1000);
-
-      // Fetch user email for display
-      try {
-        const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: { 'Authorization': `Bearer ${S.token}` }
-        });
-        const u = await r.json();
-        S.userEmail = u.email || 'Signed in';
-      } catch(e) {
-        S.userEmail = 'Signed in';
-      }
-
-      updateAuthIndicators();
-
-      // If this was called from reAuth (already on summary), stay there
-      if (document.getElementById('s-summary').classList.contains('active')) {
-        onReAuthSuccess();
-      } else {
-        // Normal flow: sign-in screen → setup
-        show('s-setup');
-      }
-    }
-  });
-}
+const CLIENT_ID    = '1052527529940-o34ogstcjcigvelljitffehudjuv5ao8.apps.googleusercontent.com';
+const REDIRECT_URI = 'https://gu-27.github.io/jc-investments-rentals/inspection.html';
+const SCOPES       = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email';
 
 function signIn() {
-  if (!tokenClient) initAuth();
-  if (!tokenClient) { alert('Could not initialize Google Sign-In. Check your Client ID.'); return; }
-  document.getElementById('signin-spinner').style.display = 'block';
-  document.getElementById('signin-btn').style.display     = 'none';
-  tokenClient.requestAccessToken({ prompt: '' });
+  localStorage.setItem('jc_mode', S.mode);
+  const p = new URLSearchParams({
+    client_id:              CLIENT_ID,
+    redirect_uri:           REDIRECT_URI,
+    response_type:          'token',
+    scope:                  SCOPES,
+    include_granted_scopes: 'true',
+  });
+  window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + p.toString();
+}
+
+async function handleAuthRedirect() {
+  const hash = window.location.hash.slice(1);
+  if (!hash) return false;
+  const p = new URLSearchParams(hash);
+  const token = p.get('access_token');
+  if (!token) return false;
+
+  // Clean the token out of the URL
+  history.replaceState(null, '', window.location.pathname + window.location.search);
+
+  S.token    = token;
+  S.tokenExp = Date.now() + ((parseInt(p.get('expires_in'), 10) - 60) * 1000);
+
+  // Restore mode that was saved before the redirect
+  const savedMode = localStorage.getItem('jc_mode');
+  if (savedMode) { S.mode = savedMode; localStorage.removeItem('jc_mode'); }
+
+  // Apply mode classes/labels (normally done in init, but we returned early)
+  document.body.classList.toggle('mode-checkout', S.mode === 'checkout');
+  const modeLabel = S.mode === 'checkin' ? 'Check-In' : 'Check-Out';
+  ['signin-mode-pill','setup-mode-badge'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = modeLabel;
+  });
+  document.getElementById('setup-title').textContent       = `New ${modeLabel}`;
+  ['rooms','room','summary'].forEach(id => {
+    const el = document.getElementById(id + '-mode-pill');
+    if (el) el.textContent = modeLabel;
+  });
+  document.getElementById('date-input').value = S.date;
+  ROOM_DEFS.forEach(r => {
+    S.rooms[r.key] = { key: r.key, label: r.label, note: '', condition: '', photos: [], completed: false };
+  });
+
+  try {
+    const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo',
+      { headers: { 'Authorization': `Bearer ${token}` } });
+    const u = await r.json();
+    S.userEmail = u.email || 'Signed in';
+  } catch(e) {
+    S.userEmail = 'Signed in';
+  }
+
+  updateAuthIndicators();
+  show('s-setup');
+  return true;
 }
 
 function skipSignIn() {
@@ -1201,10 +1218,9 @@ function skipSignIn() {
   show('s-setup');
 }
 
-// Re-auth if token expired during a long inspection
+// Re-auth if token expired — redirects again (same as signIn)
 function reAuth() {
-  if (!tokenClient) initAuth();
-  tokenClient.requestAccessToken({ prompt: '' });
+  signIn();
 }
 
 function onReAuthSuccess() {
@@ -1606,7 +1622,7 @@ async function saveToDrive() {
 
     // Count total photos
     const allPhotos = ROOM_DEFS.flatMap(r => S.rooms[r.key].photos);
-    const total = allPhotos.length + 2; // +2 for JSON + HTML report
+    const total = allPhotos.length + S.condReportPhotos.length + 2; // +2 for JSON + HTML report
     let uploaded = 0;
 
     // Upload photos per room
@@ -1617,12 +1633,22 @@ async function saveToDrive() {
         const flagPart = photo.flagged ? '_FLAGGED' : '';
         const fileName = `${String(photoNum).padStart(3,'0')}_${def.key}${flagPart}.jpg`;
         setDriveProgress(12 + Math.round((uploaded / total) * 78), `Uploading ${def.label} (${photoNum}/${allPhotos.length})…`);
-        // Convert dataUrl to blob if file not available
         const blob = photo.file || dataUrlToBlob(photo.dataUrl);
         await uploadFile(fileName, blob, 'image/jpeg', sessionId);
         uploaded++;
         photoNum++;
       }
+    }
+
+    // Upload condition report photos
+    let crNum = 1;
+    for (const photo of S.condReportPhotos) {
+      const fileName = `_cond-report_${String(crNum).padStart(3,'0')}.jpg`;
+      setDriveProgress(12 + Math.round((uploaded / total) * 78), `Uploading condition report (${crNum}/${S.condReportPhotos.length})…`);
+      const blob = photo.file || dataUrlToBlob(photo.dataUrl);
+      await uploadFile(fileName, blob, 'image/jpeg', sessionId);
+      uploaded++;
+      crNum++;
     }
 
     // Upload JSON report
@@ -1790,6 +1816,41 @@ function newInspection() {
   document.getElementById('signin-spinner').style.display = 'none';
   document.getElementById('signin-btn').style.display     = 'flex';
   show('s-signin');
+}
+
+// ════════════════════════════════════════════════════════
+//  CONDITION REPORT PHOTOS
+// ════════════════════════════════════════════════════════
+function triggerCondReport() {
+  document.getElementById('cond-report-input').click();
+}
+
+function handleCondReportPhotos(event) {
+  const files = Array.from(event.target.files);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      S.condReportPhotos.push({ dataUrl: e.target.result, file });
+      renderCondReportGrid();
+    };
+    reader.readAsDataURL(file);
+  });
+  event.target.value = '';
+}
+
+function renderCondReportGrid() {
+  const grid = document.getElementById('cond-report-grid');
+  grid.innerHTML = S.condReportPhotos.map((p, i) =>
+    `<div class="cr-thumb" style="position:relative;display:inline-block;">
+      <img src="${p.dataUrl}" style="width:80px;height:80px;object-fit:cover;border-radius:6px;">
+      <button class="cr-del" onclick="deleteCondReportPhoto(${i})" style="position:absolute;top:-6px;right:-6px;background:#DC2626;color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:.75rem;cursor:pointer;line-height:1;">✕</button>
+    </div>`
+  ).join('');
+}
+
+function deleteCondReportPhoto(idx) {
+  S.condReportPhotos.splice(idx, 1);
+  renderCondReportGrid();
 }
 
 // ════════════════════════════════════════════════════════
