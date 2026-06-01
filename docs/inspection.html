@@ -514,6 +514,47 @@
   .rsrow-name  { flex: 1; font-weight: 600; color: var(--text); }
   .rsrow-meta  { display: flex; gap: .4rem; align-items: center; }
 
+  /* ── Condition Report Upload ── */
+  .cond-report-hint {
+    font-size: .82rem;
+    color: var(--muted);
+    margin: .25rem 0 .75rem;
+    line-height: 1.5;
+  }
+  .cond-report-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: .5rem;
+    margin-top: .75rem;
+  }
+  .cr-thumb {
+    position: relative;
+    aspect-ratio: 4/3;
+    overflow: hidden;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: #f1f5f9;
+  }
+  .cr-thumb img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .cr-del {
+    position: absolute;
+    top: .3rem; right: .3rem;
+    background: rgba(0,0,0,.55);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 1.6rem; height: 1.6rem;
+    font-size: .75rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    line-height: 1;
+  }
+  .cr-del:hover { background: var(--red); }
+
   /* Drive save section */
   .save-card {
     background: var(--surface);
@@ -689,6 +730,34 @@
   }
   .btn-google-large:hover { box-shadow: 0 3px 12px rgba(0,0,0,.12); border-color: #CBD5E1; }
   .signin-note { font-size: .72rem; color: var(--muted); line-height: 1.5; }
+  .btn-skip-signin {
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: .75rem 1.2rem;
+    font-size: .88rem;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    width: 100%;
+    transition: border-color .15s, color .15s;
+  }
+  .btn-skip-signin:hover { border-color: var(--teal); color: var(--teal); }
+  .signin-or {
+    font-size: .75rem;
+    color: var(--muted);
+    text-align: center;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    width: 100%;
+  }
+  .signin-or::before, .signin-or::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
   .signin-spinner { font-size: .82rem; color: var(--muted); }
 
   /* Auth indicator in top bar */
@@ -759,6 +828,13 @@
       <div id="signin-spinner" class="signin-spinner" style="display:none">Signing in…</div>
 
       <div class="signin-note">Only files this app creates are accessible — your existing Drive files are never read or modified.</div>
+
+      <div class="signin-or">or</div>
+
+      <button class="btn-skip-signin" onclick="skipSignIn()">
+        ⬇ Skip — Download Report to Device Instead
+      </button>
+      <div style="font-size:.72rem; color:var(--muted); text-align:center; line-height:1.5;">Complete the inspection and save an HTML report directly to your phone. No Google account needed.</div>
 
     </div>
   </div>
@@ -939,6 +1015,17 @@
       </div>
     </div>
 
+    <!-- Condition Report Upload -->
+    <div class="card">
+      <div class="block">
+        <div class="block-label">📄 Property Condition Report</div>
+        <p class="cond-report-hint">Photograph the signed paper condition report and attach it here. Photos are saved alongside the inspection in Google Drive.</p>
+        <button class="camera-btn" onclick="triggerCondReport()">📷 Add Condition Report Photos</button>
+        <input type="file" id="cond-report-input" accept="image/*" multiple style="display:none" onchange="handleCondReportPhotos(event)" />
+        <div id="cond-report-grid" class="cond-report-grid"></div>
+      </div>
+    </div>
+
     <!-- Save to Drive -->
     <div class="save-card">
       <div class="save-head">☁ Save to Google Drive</div>
@@ -1020,11 +1107,12 @@ const S = {
   guest:     '',
   date:      new Date().toISOString().split('T')[0],
   notes:     '',
-  rooms:     {},   // key → { key, label, note, condition, photos:[], completed }
-  curRoom:   '',
-  token:     null,
-  tokenExp:  0,
-  userEmail: '',
+  rooms:            {},   // key → { key, label, note, condition, photos:[], completed }
+  curRoom:          '',
+  condReportPhotos: [],   // photos of the signed paper condition report
+  token:            null,
+  tokenExp:         0,
+  userEmail:        '',
 };
 
 let tokenClient = null;
@@ -1106,6 +1194,11 @@ function signIn() {
   document.getElementById('signin-spinner').style.display = 'block';
   document.getElementById('signin-btn').style.display     = 'none';
   tokenClient.requestAccessToken({ prompt: '' });
+}
+
+function skipSignIn() {
+  S.token = null;
+  show('s-setup');
 }
 
 // Re-auth if token expired during a long inspection
@@ -1424,6 +1517,19 @@ function showSummary() {
       <div class="rsrow-meta">${cond}${photos}${flagBadge}</div>
     </div>`;
   }).join('');
+
+  // Show/hide Drive card based on auth state
+  const driveCard   = document.querySelector('.save-card');
+  const downloadBtn = document.querySelector('.btn-download');
+  if (S.token) {
+    driveCard.style.display   = '';
+    downloadBtn.style.display = '';
+  } else {
+    driveCard.style.display   = 'none';
+    downloadBtn.style.marginTop = '0';
+    downloadBtn.style.fontSize  = '1rem';
+    downloadBtn.style.padding   = '1rem';
+  }
 
   show('s-summary');
 }
